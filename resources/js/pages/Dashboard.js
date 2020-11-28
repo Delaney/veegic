@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+import Upload from '../components/Upload';
+
 function Dashboard() {
     return (
         <div>
@@ -8,13 +10,8 @@ function Dashboard() {
 				<h1>Dashboard</h1>
 			</div>
 
-			<div className="grid grid-cols-2 gap-4">
-				<div className="col">
-					<span className="text-lg">Add Subtitles</span>
-				</div>
-				<div className="col">
-					<span className="text-lg">Trim</span>
-				</div>
+			<div className="mt-4">
+				<Upload />
 			</div>
 		</div>
     );

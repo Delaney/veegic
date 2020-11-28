@@ -13,4 +13,4 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/{any}', 'WebController@index')->where('any', '(.*)');;
+Route::middleware(['auth'])->get('/', 'WebController@index');

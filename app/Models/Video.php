@@ -19,6 +19,6 @@ class Video extends Model
         'title',
         'src',
         'length',
-        'format',
+        'extension',
     ];
 }
