@@ -6,7 +6,10 @@
 
         <title>Video Editor</title>
 
-		<link rel="{{ mix('css/app.css') }}"></link>
+        <link rel="stylesheet" href="{{ mix('css/app.css') }}"></link>
+
+        @auth
+        @endauth
     </head>
     <body class="antialiased">
         <div class="relative flex items-top justify-center min-h-screen bg-gray-100 dark:bg-gray-900 sm:items-center sm:pt-0">
