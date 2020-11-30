@@ -10,8 +10,10 @@ function Upload(props) {
 	const [videoInfos, setVideoInfos] = useState([]);
 
 	const selectVideo = (event) => {
-		console.log(event.target);
-		setVideo(event.target.video);
+		console.log(event.target.files[0]);
+		setVideo(event.target.files[0]);
+		setProgress(69);
+		console.log(progress);
 	}
 
 	const upload = () => {
@@ -63,8 +65,8 @@ function Upload(props) {
 			</label>
 
 			<button
-				className="btn btn-success"
-				disabled={!selectedVideo}
+				className="bg-black text-white py-2 px-3"
+				// disabled={!selectedVideo}
 				onClick={ upload }
 			>
 				Upload

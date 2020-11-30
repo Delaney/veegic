@@ -13,4 +13,4 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware(['auth'])->get('/', 'WebController@index');
+Route::middleware(['auth:sanctum'])->get('/dashboard', 'WebController@index');
