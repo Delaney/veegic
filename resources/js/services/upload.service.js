@@ -8,7 +8,7 @@ class UploadService {
 
 		formData.append("video", video);
 
-		return axios.post('/upload', formData, {
+		return axios.post("upload", formData, {
 			headers: {
 				"Content-type": "multipart/form-data"
 			},
@@ -17,7 +17,7 @@ class UploadService {
 	}
 
 	getVideos() {
-		return axios.get("/videos", {
+		return axios.get("videos", {
 			headers: {
 				"Content-type": "application/json"
 			},

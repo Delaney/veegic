@@ -31,7 +31,7 @@ function Upload(props) {
 		}).catch(() => {
 			setProgress(0);
 			setMessage("Could not upload this video!");
-			setCurrentVideo(null);
+			// setCurrentVideo(null);
 		});
 
 		setVideo(null);

@@ -21,4 +21,9 @@ class Video extends Model
         'length',
         'extension',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
