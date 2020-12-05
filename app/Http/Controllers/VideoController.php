@@ -11,7 +11,7 @@ class VideoController extends Controller
 {
     public function index(Request $request)
     {
-        $user = Auth::user();
+        $user = $request->input('user');
 
         if ($user) {
             return $user->videos;
@@ -20,13 +20,30 @@ class VideoController extends Controller
 
     public function upload(Request $request)
     {
-        // $validator = Validator::make($request->all(), [
-        //     'video' => 'required|mimes:mp4,avi'
-        // ]);
+        $validator = Validator::make($request->all(), [
+            'video' => 'required'
+        ]);
 
-        $user = Auth::user();
+        if ($validator->fails()) {
+            $error = $validator->errors()->first();
+            return response()->json([
+                'error' => 'invalid_input',
+                'message' => $error
+            ]);
+        }
 
-        \Log::info(print_r($user, true));
+        // $file = Input::file('file');
+        $file = $request->file('video');
+        $mime = $file->getMimeType();
+        $mimes = ['video/x-flv','video/mp4','application/x-mpegURL','video/MP2T','video/3gpp','video/quicktime','video/x-msvideo','video/x-ms-wmv'];
+
+        if (!in_array($mime, $mimes)) {
+            return response()->json([
+                'error' => 'invalid_file_type',
+                'message' => 'The uploaded file is not a video file'
+            ]);
+        }
+        $user = $request->input('user');
 
         $video = new Video;
         $video->user_id = $user->id;
@@ -37,5 +54,10 @@ class VideoController extends Controller
         $video->src = '/storage/' . $request->file('video')->storeAs('uploads', $fileName, 'public');
         $video->extension = $request->file('video')->getClientOriginalExtension();
         $video->save();
+
+        return response()->json([
+            'success'   => true,
+            'message'   => 'Video uploaded successfully'
+        ]);
     }
 }
