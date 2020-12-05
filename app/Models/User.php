@@ -63,4 +63,12 @@ class User extends Authenticatable
     public function videos() {
         return $this->hasMany(Video::class);
     }
+
+    public function roll_api_key() {
+        do {
+            $token = base64_encode( hash('sha256',time()) . hash('sha256',getenv('APP_KEY')) . random_bytes(206) );
+            $this->api_token = $token;
+        } while( $this->where('api_token', $this->api_token)->exists() );
+        $this->save();
+    }
 }
