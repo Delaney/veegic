@@ -45,14 +45,19 @@ class VideoController extends Controller
         }
         $user = $request->input('user');
 
-        $video = new Video;
-        $video->user_id = $user->id;
-        
+        $slug = $this->random_str(12);
+        while (Video::where('slug', $slug)->exists()) {
+            $slug = $this->random_str(12);
+        }
+
         $fileName = time() . '_' . $request->file('video')->getClientOriginalName();
         
+        $video = new Video;
+        $video->user_id = $user->id;        
         $video->title = $fileName;
         $video->src = '/storage/' . $request->file('video')->storeAs('uploads', $fileName, 'public');
         $video->extension = $request->file('video')->getClientOriginalExtension();
+        $video->slug = $slug;
         $video->save();
 
         return response()->json([
@@ -60,4 +65,26 @@ class VideoController extends Controller
             'message'   => 'Video uploaded successfully'
         ]);
     }
+
+    public function download($slug)
+    {
+        $video = Video::where('slug', $slug)->first();
+
+        $file = public_path() . $video->src;
+
+        $headers = array('Content-Type: application/pdf');
+
+        return response()->download($file, $video->title, $headers);
+    }
+
+    public static function random_str($length)
+	{
+		$keyspace = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+		$pieces = [];
+		$max = mb_strlen($keyspace, '8bit') - 1;
+		for ($i = 0; $i < $length; ++$i) {
+			$pieces []= $keyspace[random_int(0, $max)];
+		}
+		return implode('', $pieces);
+	} 
 }
