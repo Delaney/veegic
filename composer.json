@@ -9,6 +9,7 @@
     "license": "MIT",
     "require": {
         "php": "^7.3|^8.0",
+        "aws/aws-sdk-php": "^3.165",
         "fideloper/proxy": "^4.4",
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.0.1",
@@ -17,7 +18,9 @@
         "laravel/sanctum": "^2.6",
         "laravel/tinker": "^2.5",
         "laravel/ui": "^3.1",
-        "livewire/livewire": "^2.0"
+        "livewire/livewire": "^2.0",
+        "nesbot/carbon": "^2.42",
+        "pbmedia/laravel-ffmpeg": "^7.4"
     },
     "require-dev": {
         "facade/ignition": "^2.5",
