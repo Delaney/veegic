@@ -28,6 +28,9 @@ Route::group(['middleware' => 'throttle:10,1'], function () {
     Route::group(['middleware' => 'api.token'], function () {
         Route::get('/videos', 'VideoController@index');
         Route::post('/upload', 'VideoController@upload');
-        Route::get('/videos/{src}', 'VideoController@download');
+        Route::get('/download/{slug}', 'VideoController@download');
+        Route::get('/transcribe/{slug}', 'VideoController@transcribe');
     });
 });
+
+Route::post('/srt', 'VideoController@format');
