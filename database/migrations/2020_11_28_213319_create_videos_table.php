@@ -17,7 +17,7 @@ class CreateVideosTable extends Migration
             $table->id();
             $table->bigInteger('user_id');
             $table->string('title')->nullable();
-            $table->string('src');
+            $table->string('src')->nullable();
             $table->string('length')->nullable();
             $table->string('extension');
             $table->timestamps();

@@ -200,8 +200,6 @@ class VideoController extends Controller
     {
         function formatTime($t) {
             $a = explode('.', $t);
-            \Log::info($t);
-            \Log::info(print_r($a, true));
             $date = new Carbon(0);
             $date->second = $a[0];
             $result = substr($date->toISOString(), 11, 8);
@@ -217,7 +215,6 @@ class VideoController extends Controller
         $len = count($items);
 
         for ($i = 0; $i < $len; $i++) {
-            \Log::info('#' . $i);
             if ($items[$i]->type == 'pronunciation') {
                 if ($start_time == '') {
                     $start_time = $items[$i]->start_time;
