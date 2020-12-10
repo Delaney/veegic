@@ -6,7 +6,9 @@ set_time_limit(0);
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Video;
+use App\Models\Subtitles;
 use Aws\S3\S3Client;
 use Aws\TranscribeService\TranscribeServiceClient;
 use Carbon\Carbon;
@@ -44,7 +46,6 @@ class VideoController extends Controller
             ]);
         }
 
-        // $file = Input::file('file');
         $file = $request->file('video');
         $mime = $file->getMimeType();
         $mimes = ['video/x-flv','video/mp4','application/x-mpegURL','video/MP2T','video/3gpp','video/quicktime','video/x-msvideo','video/x-ms-wmv'];
@@ -160,18 +161,27 @@ class VideoController extends Controller
 
         $items = $arr_data->results->items;
         $subtitles = $this->createSRT($items);
+
+        $model = new Subtitles;
+        $model->video_id = $video->id;
+        $model->title = substr($video->title, 0, -4);
         
-        $file = "subtitles.srt";
-        $txt = fopen($file, "w") or die("Unable to open file!");
+        $fileName = $model->title . '.srt';
+        $txt = fopen($fileName, "w") or die("Unable to open file!");
         fwrite($txt, $subtitles);
         fclose($txt);
+
+        $path = Storage::putFileAs('subtitles', $fileName, $fileName);
+
+        $model->src = $path;
+        $model->save();
 
         $headers = array(
             'Content-Disposition' => 'attachment;filename=subtitles.srt',
             'Content-Type' => 'application/octet-stream'
         );
  
-        return response()->download($file, 'subtitles.srt', $headers);
+        return response()->download($fileName, $fileName, $headers);
     }
 
     public function download($slug)
@@ -199,11 +209,15 @@ class VideoController extends Controller
     public function createSRT($items)
     {
         function formatTime($t) {
-            $a = explode('.', $t);
-            $date = new Carbon(0);
-            $date->second = $a[0];
-            $result = substr($date->toISOString(), 11, 8);
-            return $result . ',' . $a[1];
+            try {
+                $a = explode('.', $t);
+                $date = new Carbon(0);
+                $date->second = $a[0];
+                $result = substr($date->toISOString(), 11, 8);
+                return $result . ',' . $a[1];
+            } catch (\Exception $ex) {
+                return '';
+            }
         }
         $result = '';
         $start_time = '';
@@ -211,7 +225,7 @@ class VideoController extends Controller
         $sentence = '';
         $n = 1;
         $t = 1;
-        $wtb = 10;
+        $wtb = 7;
         $len = count($items);
 
         for ($i = 0; $i < $len; $i++) {
