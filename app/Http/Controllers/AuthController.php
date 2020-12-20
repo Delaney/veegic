@@ -74,12 +74,14 @@ class AuthController extends Controller
 			if (!Auth::attempt($credentials)) {
 				return response()->json([
 					'message' => 'Unauthorized'
-				], 500);
+				], 401);
 			}
 			
 			$user = User::where('email', $request->email)->first();
 			if (!Hash::check($request->password, $user->password, [])) {
-				throw new \Exception('Login Error');
+				return response()->json([
+					'message' => 'Unauthorized'
+				], 401);
 			}
 			$this->generateApiKey($user);
             $this->generateToken($user);
@@ -88,7 +90,7 @@ class AuthController extends Controller
             ]);
 		} catch (\Exception $error) {
 			return response()->json([
-				'message' => 'Login Error',
+				'message' => 'Error',
 				'error' => $error,
 			], 500);
 		}
