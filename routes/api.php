@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: *');
 header('Access-Control-Allow-Headers: Origin, X-Requested-With,Authorization, Content-Type, Accept');
+header('Access-Control-Expose-Headers: *');
 
 /*
 |--------------------------------------------------------------------------
@@ -29,7 +30,8 @@ Route::group(['middleware' => 'throttle:10,1'], function () {
         Route::get('/videos', 'VideoController@index');
         Route::post('/upload', 'VideoController@upload');
         Route::get('/download/{slug}', 'VideoController@download');
-        Route::get('/transcribe/{slug}', 'VideoController@transcribe');
+        
+        Route::post('/transcribe', 'SubtitlesController@transcribe');
     });
 });
 

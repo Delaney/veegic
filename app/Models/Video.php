@@ -28,4 +28,9 @@ class Video extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function subtitles()
+    {
+        return $this->hasOne(Subtitles::class);
+    }
 }

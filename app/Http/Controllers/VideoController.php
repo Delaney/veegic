@@ -15,14 +15,6 @@ use Carbon\Carbon;
 
 class VideoController extends Controller
 {
-    public function __construct()
-    {
-        $this->region = getenv('AWS_DEFAULT_REGION');
-        $this->access_key = getenv('AWS_ACCESS_KEY_ID');
-        $this->secret_access_key = getenv('AWS_SECRET_ACCESS_KEY');
-        $this->bucketName = getenv('AWS_BUCKET');
-    }
-
     public function index(Request $request)
     {
         $user = $request->input('user');
@@ -109,79 +101,6 @@ class VideoController extends Controller
                 'error' => $e->getMessage()
             ], 400);
         }
-    }
-
-    public function transcribe($slug)
-    {
-        $video = Video::where('slug', $slug)->first();
-        $video_url = $video->s3_url;
-        $awsTranscribeClient = new TranscribeServiceClient(([
-            'region'        => $this->region,
-            'version'       => 'latest',
-            'credentials'   => [
-                'key'       => $this->access_key,
-                'secret'    =>  $this->secret_access_key
-            ]
-        ]));
-
-        $job_id = uniqid();
-        $transcriptionResult = $awsTranscribeClient->startTranscriptionJob([
-            'LanguageCode'  => 'en-US',
-            'Media' => [
-                'MediaFileUri'  => $video_url,
-            ],
-            'TranscriptionJobName' => $job_id,
-        ]);
-
-        $status = array();
-        while(true) {
-            $status = $awsTranscribeClient->getTranscriptionJob([
-                'TranscriptionJobName' => $job_id
-            ]);
-            if ($status->get('TranscriptionJob')['TranscriptionJobStatus'] == 'COMPLETED') {
-                break;
-            }
-
-            sleep(5);
-        }
-
-        $url = $status->get('TranscriptionJob')['Transcript']['TranscriptFileUri'];
-
-        $curl = curl_init();
-        curl_setopt($curl, CURLOPT_URL, $url);
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($curl, CURLOPT_HEADER, false);
-        $data = curl_exec($curl);
-        if (curl_errno($curl)) {
-            $error_msg = curl_error($curl);
-            echo $error_msg;
-        }
-        curl_close($curl);
-        $arr_data = json_decode($data);
-
-        $items = $arr_data->results->items;
-        $subtitles = $this->createSRT($items);
-
-        $model = new Subtitles;
-        $model->video_id = $video->id;
-        $model->title = substr($video->title, 0, -4);
-        
-        $fileName = $model->title . '.srt';
-        $txt = fopen($fileName, "w") or die("Unable to open file!");
-        fwrite($txt, $subtitles);
-        fclose($txt);
-
-        $path = Storage::putFileAs('subtitles', $fileName, $fileName);
-
-        $model->src = $path;
-        $model->save();
-
-        $headers = array(
-            'Content-Disposition' => 'attachment;filename=subtitles.srt',
-            'Content-Type' => 'application/octet-stream'
-        );
- 
-        return response()->download($fileName, $fileName, $headers);
     }
 
     public function download($slug)
