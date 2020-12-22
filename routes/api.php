@@ -32,7 +32,6 @@ Route::group(['middleware' => 'throttle:10,1'], function () {
         Route::get('/download/{slug}', 'VideoController@download');
         
         Route::post('/transcribe', 'SubtitlesController@transcribe');
+        Route::get('/transcribe/{job_id}', 'SubtitlesController@getSubtitles');
     });
 });
-
-Route::post('/srt', 'VideoController@format');

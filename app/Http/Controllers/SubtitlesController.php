@@ -4,53 +4,60 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use App\Models\Video;
 use App\Models\Subtitles;
-use Aws\TranscribeService\TranscribeServiceClient;
+use App\Models\Queue\TranscribeJob;
+use App\Jobs\TranscribeJob as Transcribe;
+use App\Subtitle;
 
 class SubtitlesController extends Controller
 {
     public function transcribe(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'slug' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            $error = $validator->errors()->first();
+            return response()->json([
+                'error' => 'invalid_input',
+                'message' => $error
+            ]);
+        }
+
+        $user = $request->input('user');
         $slug = $request->input('slug');
-        $file_only = $request->input('file_only');
         $video = Video::where('slug', $slug)->first();
 
-        if (!$video->subtitles && !Storage::exists( $video->subtitles->src )) {
-            \Log::info("Does not exist");
-            
-            $video_url = $video->s3_url;
-            $awsTranscribeClient = new TranscribeServiceClient(([
-                'region'        => $this->region,
-                'version'       => 'latest',
-                'credentials'   => [
-                    'key'       => $this->access_key,
-                    'secret'    =>  $this->secret_access_key
-                ]
-            ]));
-    
-            $job_id = uniqid();
-            $transcriptionResult = $awsTranscribeClient->startTranscriptionJob([
-                'LanguageCode'  => 'en-US',
-                'Media' => [
-                    'MediaFileUri'  => $video_url,
-                ],
-                'TranscriptionJobName' => $job_id,
+        if ($video->user_id === $user->id) {
+            $job = TranscribeJob::create([
+                'video_id' => $video->id,
+                'job_name' => uniqid()
             ]);
+            $job->save();
     
-            $status = array();
-            while(true) {
-                $status = $awsTranscribeClient->getTranscriptionJob([
-                    'TranscriptionJobName' => $job_id
-                ]);
-                if ($status->get('TranscriptionJob')['TranscriptionJobStatus'] == 'COMPLETED') {
-                    break;
-                }
-    
-                sleep(5);
-            }
-    
-            $url = $status->get('TranscriptionJob')['Transcript']['TranscriptFileUri'];
+            Transcribe::dispatch($job->id, $slug);
+            
+            return response()->json([
+                'success' => true,
+                'job' => $job->id
+            ]);
+        } else {
+            return response()->json([
+                'success' => false
+            ], 400);
+        }
+    }
+
+    public function getSubtitles($job_id)
+    {
+        $job = TranscribeJob::find($job_id);
+
+        if ($job->complete) {
+            $url = $job->url;
+            $video = Video::find($job->video_id);
     
             $curl = curl_init();
             curl_setopt($curl, CURLOPT_URL, $url);
@@ -65,7 +72,9 @@ class SubtitlesController extends Controller
             $arr_data = json_decode($data);
     
             $items = $arr_data->results->items;
-            $subtitles = $this->createSRT($items);
+    
+            $sub = new Subtitle;
+            $subtitles = $sub->createSRT($items);
             $title = $video->title;
             
             $fileName = $title . '.srt';
@@ -74,7 +83,7 @@ class SubtitlesController extends Controller
             fclose($txt);
     
             $path = Storage::putFileAs('subtitles', $fileName, $fileName);
-
+    
             if (!$video->subtitles) {
                 $model = new Subtitles;
                 $model->video_id = $video->id;
@@ -86,16 +95,18 @@ class SubtitlesController extends Controller
                 $sub->src = $path;
                 $sub->save();
             }
-    
-            
-    
-        }
 
-        $headers = array(
-            'Content-Disposition' => 'attachment;filename=subtitles.srt',
-            'Content-Type' => 'application/octet-stream'
-        );
- 
-        return response()->download($fileName, $fileName, $headers);
+            $headers = array(
+                'Content-Disposition' => 'attachment;filename=subtitles.srt',
+                'Content-Type' => 'application/octet-stream'
+            );
+
+            return response()->download($fileName, $fileName, $headers);
+        } else {
+            return response()->json([
+                'error' => true,
+                'message' => 'Transcription job not done'
+            ]);
+        }
     }
 }

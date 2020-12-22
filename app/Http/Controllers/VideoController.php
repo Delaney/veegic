@@ -7,6 +7,7 @@ set_time_limit(0);
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use App\Models\Video;
 use App\Models\Subtitles;
 use Aws\S3\S3Client;
@@ -50,7 +51,8 @@ class VideoController extends Controller
         }
         $user = $request->input('user');
 
-        $fileName = time() . '_' . $request->file('video')->getClientOriginalName();
+        $name = time() . '_' . $request->file('video')->getClientOriginalName();
+        $fileName = Str::of($name)->basename('.' . $request->file('video')->getClientOriginalExtension());
         
         $video_url = $this->uploadToS3($request);
         
@@ -62,7 +64,7 @@ class VideoController extends Controller
         $video = new Video;
         $video->user_id = $user->id;        
         $video->title = $fileName;
-        $video->src = '/storage/' . $request->file('video')->storeAs('uploads', $fileName, 'public');
+        $video->src = '/storage/' . $request->file('video')->storeAs('uploads', $fileName);
         $video->extension = $request->file('video')->getClientOriginalExtension();
         $video->slug = $slug;
         $video->s3_url = $video_url;
@@ -123,69 +125,5 @@ class VideoController extends Controller
 			$pieces []= $keyspace[random_int(0, $max)];
 		}
 		return implode('', $pieces);
-    }
-    
-    public function createSRT($items)
-    {
-        function formatTime($t) {
-            try {
-                $a = explode('.', $t);
-                $date = new Carbon(0);
-                $date->second = $a[0];
-                $result = substr($date->toISOString(), 11, 8);
-                return $result . ',' . $a[1];
-            } catch (\Exception $ex) {
-                return '';
-            }
-        }
-        $result = '';
-        $start_time = '';
-        $end_time = '';
-        $sentence = '';
-        $n = 1;
-        $t = 1;
-        $wtb = 7;
-        $len = count($items);
-
-        for ($i = 0; $i < $len; $i++) {
-            if ($items[$i]->type == 'pronunciation') {
-                if ($start_time == '') {
-                    $start_time = $items[$i]->start_time;
-                }
-                $end_time = $items[$i]->end_time;
-                $sentence = $sentence . $items[$i]->alternatives[0]->content . ' ';
-                $t++;
-            } else if (
-                $items[$i]->type == 'punctuation' &&
-                    $items[$i]->alternatives[0]->content == '.'
-            ) {
-                $result = $result . $n . "\n";
-                $result = $result . formatTime($start_time) . ' --> ' . formatTime($end_time) . "\n" . $sentence . "\n\n";
-                $sentence = '';
-                $start_time = '';
-                $n++;
-                $t = 1;
-            }
-            if ($t > $wtb) {
-                $result = $result . $n . "\n";
-                $result = $result . formatTime($start_time) . ' --> ' . formatTime($end_time) . "\n" . $sentence . "\n\n";
-                $sentence = "";
-                $start_time = '';
-                $n++;
-                $t = 1;
-            }
-        }
-
-        return $result;
-    }
-
-    public function format(Request $request)
-    {
-        $t = $request->input('t');
-        $a = explode('.', $t);
-        $date = new Carbon(0);
-        $date->second = $a[0];
-        $result = substr($date->toISOString(), 11, 8);
-        return $result . ',' . $a[1];
     }
 }
