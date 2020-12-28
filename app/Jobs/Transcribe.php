@@ -11,13 +11,13 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Subtitles;
-use App\Models\Queue\TranscribeJob as TranscribeJobModel;
+use App\Models\Queue\TranscribeJob;
 use Aws\TranscribeService\TranscribeServiceClient;
 use App\AWS;
 use App\Models\Video;
 use App\Subtitle;
 
-class TranscribeJob implements ShouldQueue
+class Transcribe implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -34,7 +34,7 @@ class TranscribeJob implements ShouldQueue
     {
         $video = Video::where('slug', $slug)->first();
         $this->video_id = $video->id;
-        $this->url = $video->s3_url;
+        $this->url = urldecode($video->s3_url);
         $this->job_id = $job_id;
     }
 
@@ -46,7 +46,7 @@ class TranscribeJob implements ShouldQueue
     public function handle()
     {
         $video = Video::find($this->video_id);
-        $job = TranscribeJobModel::find($this->job_id);
+        $job = TranscribeJob::find($this->job_id);
         $awsTranscribeClient = new TranscribeServiceClient(([
             'region'        => AWS::credentials()->region,
             'version'       => 'latest',

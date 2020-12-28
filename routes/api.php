@@ -33,5 +33,7 @@ Route::group(['middleware' => 'throttle:10,1'], function () {
         
         Route::post('/transcribe', 'SubtitlesController@transcribe');
         Route::get('/transcribe/{job_id}', 'SubtitlesController@getSubtitles');
+
+        Route::post('/burnSRT', 'FFMpegController@burnSRT');
     });
 });

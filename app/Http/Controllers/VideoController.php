@@ -9,9 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use App\Models\Video;
-use App\Models\Subtitles;
 use Aws\S3\S3Client;
-use Aws\TranscribeService\TranscribeServiceClient;
 use Carbon\Carbon;
 
 class VideoController extends Controller
@@ -64,7 +62,9 @@ class VideoController extends Controller
         $video = new Video;
         $video->user_id = $user->id;        
         $video->title = $fileName;
-        $video->src = '/storage/' . $request->file('video')->storeAs('uploads', $fileName);
+        $video->src = $request->file('video')->store(
+            'uploads/' . $fileName, 'local'
+        );
         $video->extension = $request->file('video')->getClientOriginalExtension();
         $video->slug = $slug;
         $video->s3_url = $video_url;

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\Video;
 use App\Models\Subtitles;
 use App\Models\Queue\TranscribeJob;
-use App\Jobs\TranscribeJob as Transcribe;
+use App\Jobs\Transcribe;
 use App\Subtitle;
 
 class SubtitlesController extends Controller
@@ -31,6 +31,13 @@ class SubtitlesController extends Controller
         $slug = $request->input('slug');
         $video = Video::where('slug', $slug)->first();
 
+        if (!$video) {
+            return response()->json([
+                'video' => false,
+                'message' => 'Video not found'
+            ], 400);
+        }
+
         if ($video->user_id === $user->id) {
             $job = TranscribeJob::create([
                 'video_id' => $video->id,
@@ -46,7 +53,8 @@ class SubtitlesController extends Controller
             ]);
         } else {
             return response()->json([
-                'success' => false
+                'video' => false,
+                'message' => 'Permissions not found'
             ], 400);
         }
     }
