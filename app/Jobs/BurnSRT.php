@@ -42,20 +42,22 @@ class BurnSRT implements ShouldQueue
 
         $videoPath = storage_path('app') . '\\' . (str_replace('/','\\', $video->src));
         $subtitlePath = 'storage/app/' . $subs->src;
-        $newTitle = storage_path('app') . '\uploads\jobs\\' . uniqid() . '.' . $video->extension;
+        $newTitle = storage_path('app') . '\jobs\\' . uniqid() . '.' . $video->extension;
 
         $command = "ffmpeg -i $videoPath -vf subtitles=$subtitlePath -c:a copy $newTitle";
         $path = base_path() . '\storage\app\subtitles';
         $path = (str_replace('\\','/', $path));
         // $mv = "cd $path";
         // \Log::info($mv);
-        // \Log::info($command);
+        //\Log::info($command);
         
-        // try {
-        //     \Log::info(shell_exec($command));
-        // } catch (\Exception $ex) {
-        //     \Log::error("\n\n" . $ex . "\n\n");
-        // }
+        try {
+            \Log::info(shell_exec($command));
+        } catch (\Exception $ex) {
+            \Log::error("\n\n" . $ex . "\n\n");
+        }
+
+        dd();
 
         // FFMpeg::fromDisk('local')
         //     ->open(str_replace('/','\\', $path))

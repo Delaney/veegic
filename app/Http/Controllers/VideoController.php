@@ -62,9 +62,7 @@ class VideoController extends Controller
         $video = new Video;
         $video->user_id = $user->id;        
         $video->title = $fileName;
-        $video->src = $request->file('video')->store(
-            'uploads/' . $fileName, 'local'
-        );
+        $video->src = $request->file('video')->storeAs('uploads', $name);
         $video->extension = $request->file('video')->getClientOriginalExtension();
         $video->slug = $slug;
         $video->s3_url = $video_url;
