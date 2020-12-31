@@ -67,19 +67,15 @@ class SubtitlesController extends Controller
             $url = $job->url;
             $video = Video::find($job->video_id);
     
-            $curl = curl_init();
-            curl_setopt($curl, CURLOPT_URL, $url);
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_HEADER, false);
-            $data = curl_exec($curl);
-            if (curl_errno($curl)) {
-                $error_msg = curl_error($curl);
-                echo $error_msg;
+            $client = new \GuzzleHttp\Client();
+            $arr_data = [];
+            
+            $response = $client->request('GET', $url);
+            if ($response->getStatusCode() == 200) {
+                $arr_data = json_decode($response->getBody(), true);
             }
-            curl_close($curl);
-            $arr_data = json_decode($data);
-    
-            $items = $arr_data->results->items;
+            
+            $items = $arr_data['results']['items'];
     
             $sub = new Subtitle;
             $subtitles = $sub->createSRT($items);

@@ -57,19 +57,16 @@ class Transcribe implements ShouldQueue
         ]));
 
         if ($job->status == NULL) {
-            // if (!$video->subtitles || !Storage::exists( $video->subtitles->src )) {
-            if (!$video->subtitles) {
-                $transcriptionResult = $awsTranscribeClient->startTranscriptionJob([
-                    'LanguageCode'  => 'en-US',
-                    'Media' => [
-                        'MediaFileUri'  => $this->url,
-                    ],
-                    'TranscriptionJobName' => $job->job_name,
-                ]);
+            $transcriptionResult = $awsTranscribeClient->startTranscriptionJob([
+                'LanguageCode'  => 'en-US',
+                'Media' => [
+                    'MediaFileUri'  => $this->url,
+                ],
+                'TranscriptionJobName' => $job->job_name,
+            ]);
 
-                $job->status = $transcriptionResult->get('TranscriptionJob')['TranscriptionJobStatus'];
-                $job->save();
-            }
+            $job->status = $transcriptionResult->get('TranscriptionJob')['TranscriptionJobStatus'];
+            $job->save();
         }
         if (!$job->complete) {
             $status = array();

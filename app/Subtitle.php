@@ -18,16 +18,16 @@ class Subtitle
         $len = count($items);
 
         for ($i = 0; $i < $len; $i++) {
-            if ($items[$i]->type == 'pronunciation') {
+            if ($items[$i]['type'] == 'pronunciation') {
                 if ($start_time == '') {
-                    $start_time = $items[$i]->start_time;
+                    $start_time = $items[$i]['start_time'];
                 }
-                $end_time = $items[$i]->end_time;
-                $sentence = $sentence . $items[$i]->alternatives[0]->content . ' ';
+                $end_time = $items[$i]['end_time'];
+                $sentence = $sentence . $items[$i]['alternatives'][0]['content'] . ' ';
                 $t++;
             } else if (
-                $items[$i]->type == 'punctuation' &&
-                    $items[$i]->alternatives[0]->content == '.'
+                $items[$i]['type'] == 'punctuation' &&
+                    $items[$i]['alternatives'][0]['content'] == '.'
             ) {
                 $result = $result . $n . "\n";
                 $result = $result . $this->formatTime($start_time) . ' --> ' . $this->formatTime($end_time) . "\n" . $sentence . "\n\n";
