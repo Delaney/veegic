@@ -42,22 +42,20 @@ class BurnSRT implements ShouldQueue
 
         if (!$subtitle) return false;
 
-        $videoPath = storage_path('app') . '\\' . (str_replace('/','\\', $video->src));
-        // $videoPath = storage_path('app') . '/' . $video->src;
-
-        $subtitlePath = 'storage/app/' . $subtitle->src;
-        // $subtitlePath = storage_path('app') . '\\' . (str_replace('/','\\', $subtitle->src));
+        // $videoPath = storage_path('app') . '\\' . (str_replace('/','\\', $video->src));
+        // $subtitlePath = 'storage/app/' . $subtitle->src;
         
+        $videoPath = storage_path('app') . '/' . $video->src;
+        $subtitlePath = storage_path('app') . '/' . $subtitle->src;
         $newTitle = storage_path('app') . $log->result_src;
-        // $newTitle = storage_path('app') . '/jobs/' . $result;
 
         $command = "ffmpeg -i $videoPath -vf subtitles=$subtitlePath -c:a copy $newTitle";
         
         try {
-            \Log::info($command);
-            \Log::info("\n");
+            // \Log::info($command);
+            // \Log::info("\n");
             shell_exec($command);
-            return true;
+            // return true;
         } catch (\Exception $ex) {
             \Log::error("\n\n" . $ex . "\n\n");
         }

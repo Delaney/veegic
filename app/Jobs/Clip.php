@@ -45,30 +45,14 @@ class Clip implements ShouldQueue
     {
         $log = EditLog::find($this->log_id);
 
-        $videoPath = storage_path('app') . '\\' . (str_replace('/','\\', $log->src));
-        // $videoPath = str_replace('/','\\', $log->src);
-        
-        $newTitle = storage_path('app') . '\\' . $log->result_src;
+        // $videoPath = storage_path('app') . '\\' . (str_replace('/','\\', $log->src));
+        // $newTitle = storage_path('app') . '\\' . $log->result_src;
+
+        $videoPath = storage_path('app') . '/' . $log->src;
+        $newTitle = storage_path('app') . $log->result_src;
 		
-        // $clipFilter = new \FFMpeg\Filters\Video\ClipFilter($start);
-
-        // FFMpeg::open($videoPath)
-        //     ->addFilter($clipFilter)
-		// 	->export()
-        //     ->clip($start, $duration)
-        //     ->onProgress(function ($percentage, $remaining, $rate) {
-        //         \Log::info("{$percentage}% done, {$remaining} seconds left at rate: {$rate}");
-        //     })
-        //     ->toDisk('local')
-        //     ->inFormat(new \FFMpeg\Format\Video\X264('libmp3lame'))
-        //     ->save(str_replace('/','\\', $log->result_src));
-
-        // $duration = "ffprobe -v error -select_streams v:0 -show_entries stream=duration -of default=noprint_wrappers=1:nokey=1 $videoPath";
         $cmd = "ffprobe -i $videoPath -show_format -v quiet | sed -n 's/duration=//p'";
         $end_time = ($this->end_time) ? $this->end_time : $this->toTimecode(shell_exec($cmd));
-        // \Log::info($end_time);
-        // \Log::info("\n");
-
         $command = "ffmpeg -i $videoPath -ss $this->start_time -to $end_time -c:v copy -c:a copy $newTitle";
 
         try {
