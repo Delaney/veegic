@@ -48,11 +48,11 @@ class Transcribe implements ShouldQueue
         $video = Video::find($this->video_id);
         $job = TranscribeJob::find($this->job_id);
         $awsTranscribeClient = new TranscribeServiceClient(([
-            'region'        => AWS::credentials()->region,
+            'region'        => config('aws.region'),
             'version'       => 'latest',
             'credentials'   => [
-                'key'       => AWS::credentials()->access_key,
-                'secret'    =>  AWS::credentials()->secret_access_key
+                'key'       => config('aws.access_key'),
+                'secret'    =>  config('aws.secret_access_key')
             ]
         ]));
 

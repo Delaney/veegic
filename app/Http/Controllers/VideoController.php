@@ -12,6 +12,7 @@ use App\Models\Video;
 use Aws\S3\S3Client;
 use Carbon\Carbon;
 use App\Models\EditLog;
+use App\AWS;
 
 class VideoController extends Controller
 {
@@ -77,12 +78,17 @@ class VideoController extends Controller
 
     private function uploadToS3(Request $request)
     {
+        $region = config('aws.region');
+        $access_key = config('aws.access_key');
+        $secret_access_key = config('aws.secret_access_key');
+        $bucketName = config('aws.bucket_name');
+
         $s3 = new S3Client([
             'version'   =>  'latest',
-            'region'    =>  $this->region,
+            'region'    =>  $region,
             'credentials'   => [
-                'key'       =>  $this->access_key,
-                'secret'    =>  $this->secret_access_key
+                'key'       =>  $access_key,
+                'secret'    =>  $secret_access_key
             ]
         ]);
 
@@ -90,7 +96,7 @@ class VideoController extends Controller
         
         try {
             $result = $s3->putObject([
-                'Bucket'    =>  $this->bucketName,
+                'Bucket'    =>  $bucketName,
                 'Key'       =>  urlencode($fileName),
                 'Body'      =>  fopen($request->file('video'), 'r'),
                 'ACL'       =>  'public-read',
@@ -131,12 +137,6 @@ class VideoController extends Controller
                 $name = explode('/', $result);
                 $len = count($name);
                 $name = $name[$len - 1];
-                
-                \Log::info([
-                    $exists,
-                    $size,
-                    $result
-                ]);
                 
                 if ($size > 0) {
                     return response()->download($path, $name);
