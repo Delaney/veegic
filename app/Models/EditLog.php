@@ -17,6 +17,10 @@ class EditLog extends Model
     protected $fillable = [
         'id',
         'user_id',
-        'type'
+        'video_id',
+        'src',
+        'type',
+        'complete',
+        'result_src'
     ];
 }

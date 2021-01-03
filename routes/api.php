@@ -26,14 +26,20 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::group(['middleware' => 'throttle:10,1'], function () {
     Route::post('login', 'AuthController@login');
     Route::post('register', 'AuthController@register');
+
     Route::group(['middleware' => 'api.token'], function () {
         Route::get('/videos', 'VideoController@index');
-        Route::post('/upload', 'VideoController@upload');
-        Route::get('/download/{slug}', 'VideoController@download');
-        
-        Route::post('/transcribe', 'SubtitlesController@transcribe');
-        Route::get('/transcribe/{job_id}', 'SubtitlesController@getSubtitles');
 
-        Route::post('/burnSRT', 'FFMpegController@burnSRT');
+        //Jobs
+        Route::post('/upload', 'VideoController@upload'); // In: file | Out: file_info
+        Route::post('/transcribe', 'SubtitlesController@transcribe'); // In: slug / id | Out: id
+        Route::post('/burnSRT', 'FFMpegController@burnSRT'); // In: slug / id | Out: id
+        Route::post('/resize', 'FFMpegController@resize');
+        Route::post('/clip', 'FFMpegController@clip');
+        
+        //Results
+        Route::get('/download/{slug}', 'VideoController@download');
+        Route::get('/transcribe/{job_id}', 'SubtitlesController@getSubtitles'); // In: id | Out: srt
+        Route::get('/result/{log_id}', 'VideoController@downloadResult');
     });
 });

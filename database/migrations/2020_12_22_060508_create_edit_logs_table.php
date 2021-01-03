@@ -16,7 +16,12 @@ class CreateEditLogsTable extends Migration
         Schema::create('edit_logs', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('user_id');
+            $table->bigInteger('video_id')->nullable();
+            $table->string('src')->nullable();
             $table->string('type');
+            $table->string('data')->nullable();
+            $table->string('result_src')->nullable();
+            $table->boolean('complete')->default(false);
             $table->timestamps();
         });
     }

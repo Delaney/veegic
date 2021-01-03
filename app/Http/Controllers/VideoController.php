@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 use App\Models\Video;
 use Aws\S3\S3Client;
 use Carbon\Carbon;
+use App\Models\EditLog;
 
 class VideoController extends Controller
 {
@@ -112,6 +113,48 @@ class VideoController extends Controller
         $headers = array('Content-Type: application/pdf');
 
         return response()->download($file, $video->title, $headers);
+    }
+
+    public function downloadResult($log_id, Request $request)
+    {
+        $user = $request->input('user');
+        $log = EditLog::find($log_id);
+        if ($log && $log->user_id == $user->id) {
+            $result = $log->result_src;
+            $path = storage_path('app/' . $result);
+
+            $exists = file_exists($path);
+
+            if ($exists) {
+                $size = filesize($path);
+                
+                $name = explode('/', $result);
+                $len = count($name);
+                $name = $name[$len - 1];
+                
+                \Log::info([
+                    $exists,
+                    $size,
+                    $result
+                ]);
+                
+                if ($size > 0) {
+                    return response()->download($path, $name);
+                } else {
+                    return response()->json([
+                        'status' => false
+                    ]);
+                }
+            }
+
+            return response()->json([
+                'error' => 'Video not found'
+            ]);
+        } else {
+            return response()->json([
+                'error' => 'Wrong id'
+            ]);
+        }
     }
 
     public static function random_str($length)

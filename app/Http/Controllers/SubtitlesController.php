@@ -9,26 +9,31 @@ use App\Models\Video;
 use App\Models\Subtitles;
 use App\Models\Queue\TranscribeJob;
 use App\Jobs\Transcribe;
+use App\Models\EditLog;
 use App\Subtitle;
+use Illuminate\Support\Facades\File;
 
 class SubtitlesController extends Controller
 {
     public function transcribe(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'slug' => 'required'
-        ]);
+        // $validator = Validator::make($request->all(), [
+        //     'slug' => 'required'
+        // ]);
 
-        if ($validator->fails()) {
-            $error = $validator->errors()->first();
-            return response()->json([
-                'error' => 'invalid_input',
-                'message' => $error
-            ]);
-        }
+        // if ($validator->fails()) {
+        //     $error = $validator->errors()->first();
+        //     return response()->json([
+        //         'error' => 'invalid_input',
+        //         'message' => $error
+        //     ]);
+        // }
 
         $user = $request->input('user');
         $slug = $request->input('slug');
+        $id = $request->input('id');
+
+        $src = 
         $video = Video::where('slug', $slug)->first();
 
         if (!$video) {
@@ -41,15 +46,24 @@ class SubtitlesController extends Controller
         if ($video->user_id === $user->id) {
             $job = TranscribeJob::create([
                 'video_id' => $video->id,
-                'job_name' => uniqid()
+                'job_name' => time() . '_' . uniqid()
             ]);
             $job->save();
+
+            $job_name = time() . '_' . uniqid();
+
+            // $log = EditLog::create([
+            //     'user_id'       => $user->id,
+            //     'video_id'      => $video->id,
+            //     'type'          => 'transcribe',
+            //     'data'          => $job_name,
+            // ]);
     
             Transcribe::dispatch($job->id, $slug);
             
             return response()->json([
                 'success' => true,
-                'job' => $job->id
+                'id' => $job->id
             ]);
         } else {
             return response()->json([
