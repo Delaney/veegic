@@ -49,7 +49,7 @@ class Clip implements ShouldQueue
         // $newTitle = storage_path('app') . '\\' . $log->result_src;
 
         $videoPath = storage_path('app') . '/' . $log->src;
-        $newTitle = storage_path('app') . $log->result_src;
+        $newTitle = storage_path('app') . '/' . $log->result_src;
 		
         $cmd = "ffprobe -i $videoPath -show_format -v quiet | sed -n 's/duration=//p'";
         $end_time = ($this->end_time) ? $this->end_time : $this->toTimecode(shell_exec($cmd));

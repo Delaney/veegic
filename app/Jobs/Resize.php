@@ -40,9 +40,8 @@ class Resize implements ShouldQueue
     public function handle()
     {
         $log = EditLog::find($this->log_id);
-        $videoPath = str_replace('/','\\', $log->src);
 
-        FFMpeg::open($videoPath)
+        FFMpeg::open($log->src)
             ->export()
             ->resize($this->dimensions['width'], $this->dimensions['height'])
             ->onProgress(function ($percentage, $remaining, $rate) {
@@ -50,6 +49,6 @@ class Resize implements ShouldQueue
             })
             ->toDisk('local')
             ->inFormat(new \FFMpeg\Format\Video\X264('libmp3lame'))
-            ->save(str_replace('/','\\', $log->result_src));
+            ->save($log->result_src);
     }
 }
