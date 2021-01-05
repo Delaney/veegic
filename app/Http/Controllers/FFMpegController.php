@@ -45,7 +45,7 @@ class FFMpegController extends Controller
             $log->type = 'burn_subtitles';
             $log->result_src = '/jobs//' . time() . '_' . uniqid() . '.' . $video->extension;
             $log->save();
-            BurnSRT::dispatch($log->id);
+            BurnSRT::dispatch($log->id)->onQueue('BurnSubtitles');
 
             return response()->json([
                 'job' => $log->id,
@@ -97,7 +97,7 @@ class FFMpegController extends Controller
             }
     
             if ($video->user_id === $user->id) {
-                Resize::dispatch($log->id, $request->input('dimensions'));
+                Resize::dispatch($log->id, $request->input('dimensions'))->onQueue('Resize');
     
                 return response()->json([
                     'job' => $log->id,
@@ -156,7 +156,7 @@ class FFMpegController extends Controller
             $start_time = $request->input('start_time');
             $end_time = $request->input('end_time');
             if ($video->user_id === $user->id) {
-                Clip::dispatch($log->id, $start_time, $end_time);
+                Clip::dispatch($log->id, $start_time, $end_time)->onQueue('Clip');
     
                 return response()->json([
                     'job' => $log->id,

@@ -17,23 +17,10 @@ class SubtitlesController extends Controller
 {
     public function transcribe(Request $request)
     {
-        // $validator = Validator::make($request->all(), [
-        //     'slug' => 'required'
-        // ]);
-
-        // if ($validator->fails()) {
-        //     $error = $validator->errors()->first();
-        //     return response()->json([
-        //         'error' => 'invalid_input',
-        //         'message' => $error
-        //     ]);
-        // }
-
         $user = $request->input('user');
         $slug = $request->input('slug');
         $id = $request->input('id');
 
-        $src = 
         $video = Video::where('slug', $slug)->first();
 
         if (!$video) {
@@ -59,7 +46,7 @@ class SubtitlesController extends Controller
             //     'data'          => $job_name,
             // ]);
     
-            Transcribe::dispatch($job->id, $slug);
+            Transcribe::dispatch($job->id, $slug)->onQueue('Subtitles');
             
             return response()->json([
                 'success' => true,
