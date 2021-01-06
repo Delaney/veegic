@@ -39,7 +39,7 @@ Route::group(['middleware' => 'throttle:10,1'], function () {
         
         //Results
         Route::get('/download/{slug}', 'VideoController@download');
-        Route::get('/transcribe/{job_id}', 'SubtitlesController@getSubtitles'); // In: id | Out: srt
+        Route::get('/transcribe/{slug}', 'SubtitlesController@getSubtitles'); // In: id | Out: srt
         Route::get('/result/{log_id}', 'VideoController@downloadResult');
     });
 });

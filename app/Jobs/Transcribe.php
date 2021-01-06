@@ -15,27 +15,27 @@ use App\Models\Queue\TranscribeJob;
 use Aws\TranscribeService\TranscribeServiceClient;
 use App\AWS;
 use App\Models\Video;
+use App\Models\EditLog;
 use App\Subtitle;
 
 class Transcribe implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    private $video_id;
     private $url;
-    private $job_id;
+    private $log_id;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($job_id, $slug)
+    public function __construct($log_id, $slug)
     {
         $video = Video::where('slug', $slug)->first();
         $this->video_id = $video->id;
         $this->url = urldecode($video->s3_url);
-        $this->job_id = $job_id;
+        $this->log_id = $log_id;
     }
 
     /**
@@ -46,7 +46,8 @@ class Transcribe implements ShouldQueue
     public function handle()
     {
         $video = Video::find($this->video_id);
-        $job = TranscribeJob::find($this->job_id);
+        $log = EditLog::find($this->log_id);
+
         $awsTranscribeClient = new TranscribeServiceClient(([
             'region'        => config('aws.region'),
             'version'       => 'latest',
@@ -56,32 +57,50 @@ class Transcribe implements ShouldQueue
             ]
         ]));
 
-        if ($job->status == NULL) {
+        if ($log->src == NULL) {
             $transcriptionResult = $awsTranscribeClient->startTranscriptionJob([
                 'LanguageCode'  => 'en-US',
                 'Media' => [
                     'MediaFileUri'  => $this->url,
                 ],
-                'TranscriptionJobName' => $job->job_name,
+                'TranscriptionJobName' => $log->data,
             ]);
 
-            $job->status = $transcriptionResult->get('TranscriptionJob')['TranscriptionJobStatus'];
-            $job->save();
+            $log->src = $transcriptionResult->get('TranscriptionJob')['TranscriptionJobStatus'];
+            $log->save();
         }
-        if (!$job->complete) {
+        if (!$log->complete) {
             $status = array();
             $status = $awsTranscribeClient->getTranscriptionJob([
-                'TranscriptionJobName' => $job->job_name
+                'TranscriptionJobName' => $log->data
             ]);
 
-            $job->status = $status->get('TranscriptionJob')['TranscriptionJobStatus'];
+            $log->src = $status->get('TranscriptionJob')['TranscriptionJobStatus'];
 
             if ($status->get('TranscriptionJob')['TranscriptionJobStatus'] == 'COMPLETED') {
-                $job->complete = true;
-                $job->url = $status->get('TranscriptionJob')['Transcript']['TranscriptFileUri'];
-                $job->save();
+                $log->complete = true;
+                $log->save();
+                $url = $status->get('TranscriptionJob')['Transcript']['TranscriptFileUri'];
+                $client = new \GuzzleHttp\Client();
+                $arr_data = [];
+                
+                $response = $client->request('GET', $url);
+                if ($response->getStatusCode() == 200) {
+                    $arr_data = json_decode($response->getBody(), true);
+                }
+                $items = $arr_data['results']['items'];
+                
+                $sub = $video->subtitles;
+                $subtitles = (new Subtitle)->createSRT($items);
+
+                $txt = fopen($sub->title, "w") or die("Unable to open file!");
+                fwrite($txt, $subtitles);
+                fclose($txt);
+
+                $path = Storage::putFileAs('subtitles', $sub->title, $sub->title);
             }  else {
-                self::dispatch($job->id, $video->slug);
+                sleep(10);
+                self::dispatch($log->id, $video->slug);
             }
         }
     }

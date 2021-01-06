@@ -19,6 +19,7 @@ class EditLog extends Model
         'user_id',
         'video_id',
         'src',
+        'data',
         'type',
         'complete',
         'result_src'

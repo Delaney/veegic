@@ -22,36 +22,43 @@ class SubtitlesController extends Controller
         $id = $request->input('id');
 
         $video = Video::where('slug', $slug)->first();
-
         if (!$video) {
             return response()->json([
                 'video' => false,
                 'message' => 'Video not found'
             ], 400);
         }
-
         if ($video->user_id === $user->id) {
-            $job = TranscribeJob::create([
-                'video_id' => $video->id,
-                'job_name' => time() . '_' . uniqid()
-            ]);
-            $job->save();
+            $sub = Subtitles::where('video_id', $video->id)->first();
 
-            $job_name = time() . '_' . uniqid();
+            if (!$sub) {
+                $subtitles = Subtitles::create([
+                    'video_id' => $video->id,
+                    'title' => "$video->title.srt" ,
+                    'src' => "subtitles/$video->title.srt"
+                ]);
 
-            // $log = EditLog::create([
-            //     'user_id'       => $user->id,
-            //     'video_id'      => $video->id,
-            //     'type'          => 'transcribe',
-            //     'data'          => $job_name,
-            // ]);
-    
-            Transcribe::dispatch($job->id, $slug)->onQueue('Subtitles');
-            
-            return response()->json([
-                'success' => true,
-                'id' => $job->id
-            ]);
+                $job_name = time() . '_' . uniqid();
+                $log = EditLog::create([
+                    'user_id'       => $user->id,
+                    'video_id'      => $video->id,
+                    'type'          => 'transcribe',
+                    'data'          => $job_name,
+                    'result_src'    => "subtitles/$video->title.srt"
+                ]);
+        
+                Transcribe::dispatch($log->id, $slug)->onQueue('Subtitles');
+                
+                return response()->json([
+                    'success' => true,
+                    'id' => $log->id
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Subtitles already exist'
+                ]);
+            }
         } else {
             return response()->json([
                 'video' => false,
@@ -60,58 +67,36 @@ class SubtitlesController extends Controller
         }
     }
 
-    public function getSubtitles($job_id)
+    public function getSubtitles($slug, Request $request)
     {
-        $job = TranscribeJob::find($job_id);
-
-        if ($job->complete) {
-            $url = $job->url;
-            $video = Video::find($job->video_id);
-    
-            $client = new \GuzzleHttp\Client();
-            $arr_data = [];
-            
-            $response = $client->request('GET', $url);
-            if ($response->getStatusCode() == 200) {
-                $arr_data = json_decode($response->getBody(), true);
-            }
-            
-            $items = $arr_data['results']['items'];
-    
-            $sub = new Subtitle;
-            $subtitles = $sub->createSRT($items);
-            $title = $video->title;
-            
-            $fileName = $title . '.srt';
-            $txt = fopen($fileName, "w") or die("Unable to open file!");
-            fwrite($txt, $subtitles);
-            fclose($txt);
-    
-            $path = Storage::putFileAs('subtitles', $fileName, $fileName);
-    
-            if (!$video->subtitles) {
-                $model = new Subtitles;
-                $model->video_id = $video->id;
-                $model->title = $title;
-                $model->src = $path;
-                $model->save();
-            } else {
-                $sub = Subtitles::where('video_id', $video->id)->first();
-                $sub->src = $path;
-                $sub->save();
-            }
-
-            $headers = array(
-                'Content-Disposition' => 'attachment;filename=subtitles.srt',
-                'Content-Type' => 'application/octet-stream'
-            );
-
-            return response()->download($fileName, $fileName, $headers);
-        } else {
+        $user = $request->input('user');
+        $video = Video::where('slug', $slug)->first();
+        if (!$video) {
             return response()->json([
-                'error' => true,
-                'message' => 'Transcription job not done'
-            ]);
+                'video' => false,
+                'message' => 'Video not found'
+            ], 400);
         }
+        if ($video->user_id === $user->id) {
+            $sub = $video->subtitles;
+            $path = storage_path('app/' . $sub->src);
+            $log = EditLog::where('result_src', $sub->src);
+
+            $exists = file_exists($path);
+            if ($log->complete && $exists) {
+                $headers = array(
+                    'Content-Disposition' => 'attachment;filename=subtitles.srt',
+                    'Content-Type' => 'application/octet-stream'
+                );
+    
+                return response()->download($sub->src, $sub->title, $headers);
+            } else {
+                return response()->json([
+                    'error' => true,
+                    'message' => 'Transcription job not done'
+                ]);
+            }
+        }
+
     }
 }
