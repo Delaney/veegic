@@ -12,7 +12,7 @@ use App\Models\Video;
 use Aws\S3\S3Client;
 use Carbon\Carbon;
 use App\Models\EditLog;
-use App\AWS;
+use App\Watermark;
 
 class VideoController extends Controller
 {
@@ -139,6 +139,7 @@ class VideoController extends Controller
                 $name = $name[$len - 1];
                 
                 if ($size > 0) {
+                    $path = Watermark::add($result);
                     return response()->download($path, $name);
                 } else {
                     return response()->json([
