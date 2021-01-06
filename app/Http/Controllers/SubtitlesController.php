@@ -80,7 +80,7 @@ class SubtitlesController extends Controller
         if ($video->user_id === $user->id) {
             $sub = $video->subtitles;
             $path = storage_path('app/' . $sub->src);
-            $log = EditLog::where('result_src', $sub->src);
+            $log = EditLog::where('result_src', $sub->src)->first();
 
             $exists = file_exists($path);
             if ($log->complete && $exists) {
@@ -89,7 +89,7 @@ class SubtitlesController extends Controller
                     'Content-Type' => 'application/octet-stream'
                 );
     
-                return response()->download($sub->src, $sub->title, $headers);
+                return response()->download(storage_path("app/$sub->src"), $sub->title, $headers);
             } else {
                 return response()->json([
                     'error' => true,

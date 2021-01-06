@@ -24,6 +24,7 @@ class Transcribe implements ShouldQueue
 
     private $url;
     private $log_id;
+    private $video_id;
 
     /**
      * Create a new job instance.
@@ -93,14 +94,12 @@ class Transcribe implements ShouldQueue
                 $sub = $video->subtitles;
                 $subtitles = (new Subtitle)->createSRT($items);
 
-                $txt = fopen($sub->title, "w") or die("Unable to open file!");
+                $txt = fopen(storage_path("app/$sub->src"), "w") or die("Unable to open file!");
                 fwrite($txt, $subtitles);
                 fclose($txt);
-
-                $path = Storage::putFileAs('subtitles', $sub->title, $sub->title);
             }  else {
-                sleep(10);
-                self::dispatch($log->id, $video->slug);
+                sleep(5);
+                self::dispatch($log->id, $video->slug)->onQueue('Subtitles');
             }
         }
     }
