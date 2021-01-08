@@ -126,6 +126,12 @@ class VideoController extends Controller
         $user = $request->input('user');
         $log = EditLog::find($log_id);
         if ($log && $log->user_id == $user->id) {
+            if ($log->s3) {
+                return response()->json([
+                    'url' => $log->s3
+                ]);
+            }
+
             $result = $log->result_src;
             $path = storage_path('app/' . $result);
 
@@ -140,6 +146,40 @@ class VideoController extends Controller
                 
                 if ($size > 0) {
                     $path = Watermark::add($result);
+
+                    $region = config('aws.region');
+                    $access_key = config('aws.access_key');
+                    $secret_access_key = config('aws.secret_access_key');
+                    $bucketName = config('aws.bucket_name');
+
+                    $s3 = new S3Client([
+                        'version'   =>  'latest',
+                        'region'    =>  $region,
+                        'credentials'   => [
+                            'key'       =>  $access_key,
+                            'secret'    =>  $secret_access_key
+                        ]
+                    ]);
+                    
+                    try {
+                        $result = $s3->putObject([
+                            'Bucket'    =>  $bucketName,
+                            'Key'       =>  urlencode($name),
+                            'Body'      =>  fopen($path, 'r'),
+                            'ACL'       =>  'public-read',
+                        ]);
+                        $video_url = $result->get('ObjectURL');
+                        $log->s3 = $video_url;
+                        $log->save();
+
+                        return response()->json([
+                            'url' => $video_url
+                        ]);
+                    } catch (\Exception $e) {
+                        return response()->json([
+                            'error' => $e->getMessage()
+                        ], 400);
+                    }
                     return response()->download($path, $name);
                 } else {
                     return response()->json([

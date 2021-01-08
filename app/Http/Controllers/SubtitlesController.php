@@ -79,6 +79,12 @@ class SubtitlesController extends Controller
         }
         if ($video->user_id === $user->id) {
             $sub = $video->subtitles;
+            if (!$sub) {
+                return response()->json([
+                    'subtitles' => false,
+                    'message' => 'Subtitles not found'
+                ], 400);
+            }
             $path = storage_path('app/' . $sub->src);
             $log = EditLog::where('result_src', $sub->src)->first();
 

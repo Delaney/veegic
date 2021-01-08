@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddS3UrlToVideosTable extends Migration
+class AddS3ToEditLogs extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,8 @@ class AddS3UrlToVideosTable extends Migration
      */
     public function up()
     {
-        Schema::table('videos', function (Blueprint $table) {
-            $table->string('s3_url')->nullable();
+        Schema::table('edit_logs', function (Blueprint $table) {
+            $table->string('s3')->nullable();
         });
     }
 
@@ -25,8 +25,8 @@ class AddS3UrlToVideosTable extends Migration
      */
     public function down()
     {
-        Schema::table('videos', function (Blueprint $table) {
-            $table->dropColumn('s3_url');
+        Schema::table('edit_logs', function (Blueprint $table) {
+            $table->dropColumn('s3');
         });
     }
 }
