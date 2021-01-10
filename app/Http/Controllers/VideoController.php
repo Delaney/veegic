@@ -56,7 +56,7 @@ class VideoController extends Controller
         
         $video_url = $this->uploadToS3($request);
         
-        $slug = $this->random_str(12);
+        $slug = $this->random_str(15);
         while (Video::where('slug', $slug)->exists()) {
             $slug = $this->random_str(12);
         }
@@ -180,7 +180,7 @@ class VideoController extends Controller
                             'error' => $e->getMessage()
                         ], 400);
                     }
-                    return response()->download($path, $name);
+                    // return response()->download($path, $name);
                 } else {
                     return response()->json([
                         'status' => false

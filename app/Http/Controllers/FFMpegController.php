@@ -42,8 +42,8 @@ class FFMpegController extends Controller
             $log->user_id = $user->id;
             $log->video_id = $video->id;
             $log->src = $video->src;
-            $log->type = 'burn_subtitles';
-            $log->result_src = '/jobs//' . time() . '_' . uniqid() . '.' . $video->extension;
+            $log->type = 'Burn Subtitles';
+            $log->result_src = 'jobs/' . time() . '_' . uniqid() . '.' . $video->extension;
             $log->save();
             BurnSRT::dispatch($log->id)->onQueue('BurnSubtitles');
 
@@ -60,8 +60,8 @@ class FFMpegController extends Controller
     public function resize(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'dimensions.width' => 'required',
-            'dimensions.height' => 'required',
+            'ratio.x' => 'required',
+            'ratio.y' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -76,35 +76,32 @@ class FFMpegController extends Controller
             $user = $request->input('user');
             $log = new EditLog();
             $log->user_id = $user->id;
+            $user_id = 0;
             
-            if ($request->input('slug')) {
-                $video = Video::where('slug', $request->input('slug'))->first();
-                $log->video_id = $video->id;
-                $log->src = $video->src;
-            } else {
-                $log->src = EditLog::find($request->input('id'))->result_src;
-            }
+            $check = $this->checkSlugOrId($request);
+            if (array_key_exists('error', $check)) return $check['json'];
 
-            $log->type = 'resize';
+            $log->src = $check['src'];
+            $log->video_id = $check['video_id'];
+            $user_id = $check['user_id'];
+
+            $ratioX = $request->input('ratio')['x'];
+            $ratioY = $request->input('ratio')['y'];
+
+            $log->type = 'Change aspect: ';
             $log->result_src = 'jobs/' . time() . '_' . uniqid() . '.' . substr($log->src, -3);
             $log->save();
-            
-            if (!$video) {
-                return response()->json([
-                    'video' => false,
-                    'message' => 'Video not found'
-                ], 400);
-            }
-    
-            if ($video->user_id === $user->id) {
-                Resize::dispatch($log->id, $request->input('dimensions'))->onQueue('Resize');
+                
+            if ($user_id === $user->id) {
+                Resize::dispatch($log->id, $request->input('ratio'))->onQueue('Resize');
     
                 return response()->json([
                     'job' => $log->id,
                 ], 200);
             } else {
                 return response()->json([
-                    'video' => false
+                    'error'     => true,
+                    'message'   => 'Unauthorized'
                 ], 400);
             }
         } else {
@@ -133,29 +130,23 @@ class FFMpegController extends Controller
             $user = $request->input('user');
             $log = new EditLog();
             $log->user_id = $user->id;
-            
-            if ($request->input('slug')) {
-                $video = Video::where('slug', $request->input('slug'))->first();
-                $log->video_id = $video->id;
-                $log->src = $video->src;
-            } else {
-                $log->src = EditLog::find($request->input('id'))->result_src;
-            }
+            $user_id = 0;
 
-            $log->type = 'resize';
-            $log->result_src = 'jobs/' . time() . '_' . uniqid() . '.' . substr($log->src, -3);
-            $log->save();
-            
-            if (!$video) {
-                return response()->json([
-                    'video' => false,
-                    'message' => 'Video not found'
-                ], 400);
-            }
+            $check = $this->checkSlugOrId($request);
+            if (array_key_exists('error', $check)) return $check['json'];
+
+            $log->src = $check['src'];
+            $log->video_id = $check['video_id'];
+            $user_id = $check['user_id'];
 
             $start_time = $request->input('start_time');
             $end_time = $request->input('end_time');
-            if ($video->user_id === $user->id) {
+
+            $log->type = "Clip: $start_time - $end_time";
+            $log->result_src = 'jobs/' . time() . '_' . uniqid() . '.' . substr($log->src, -3);
+            $log->save();
+
+            if ($user_id === $user->id) {
                 Clip::dispatch($log->id, $start_time, $end_time)->onQueue('Clip');
     
                 return response()->json([
@@ -172,5 +163,48 @@ class FFMpegController extends Controller
             ], 400);
         }
 
+    }
+
+    public function checkSlugOrId(Request $request)
+    {
+        $user_id = 0;
+        $video_id = null;
+        
+        if ($request->input('slug')) {
+            $video = Video::where('slug', $request->input('slug'))->first();
+            if (!$video) {
+                return [
+                    'error' => true,
+                    'json'  => response()->json([
+                        'video' => false,
+                        'message' => 'Video not found'
+                    ], 400)
+                ];
+            }
+
+            $video_id = $video->id;
+            $src = $video->src;
+            $user_id = $video->user_id;
+        } else {
+            $log = EditLog::find($request->input('id'));
+            if (!$log) {
+                return [
+                    'error' => true,
+                    'json'  => response()->json([
+                        'video' => false,
+                        'message' => 'Job not found'
+                    ], 400)
+                ];
+            }
+
+            $src = $log->result_src;
+            $user_id = EditLog::find($request->input('id'))->user_id;
+        }
+
+        return [
+            'src'       => $src,
+            'user_id'   => $user_id,
+            'video_id'     => $video_id ? $video_id : null
+        ];
     }
 }
