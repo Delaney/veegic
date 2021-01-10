@@ -43,7 +43,7 @@ class SubtitlesController extends Controller
                     'user_id'       => $user->id,
                     'video_id'      => $video->id,
                     'type'          => 'transcribe',
-                    'data'          => $job_name,
+                    's3'          => $job_name,
                     'result_src'    => "subtitles/$video->title.srt"
                 ]);
         
@@ -88,14 +88,18 @@ class SubtitlesController extends Controller
             $path = storage_path('app/' . $sub->src);
             $log = EditLog::where('result_src', $sub->src)->first();
 
-            $exists = file_exists($path);
-            if ($log->complete && $exists) {
-                $headers = array(
-                    'Content-Disposition' => 'attachment;filename=subtitles.srt',
-                    'Content-Type' => 'application/octet-stream'
-                );
-    
-                return response()->download(storage_path("app/$sub->src"), $sub->title, $headers);
+            if ($log->complete) {
+                if ($request->input('file')) {
+                    $exists = file_exists($path);
+                    if ($exists) {
+                    $headers = array(
+                        'Content-Disposition' => 'attachment;filename=subtitles.srt',
+                        'Content-Type' => 'application/octet-stream'
+                    );
+        
+                    return response()->download(storage_path("app/$sub->src"), $sub->title, $headers);
+                }
+                return response()->json(unserialize($sub->data));
             } else {
                 return response()->json([
                     'error' => true,

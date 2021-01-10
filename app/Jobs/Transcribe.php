@@ -64,7 +64,7 @@ class Transcribe implements ShouldQueue
                 'Media' => [
                     'MediaFileUri'  => $this->url,
                 ],
-                'TranscriptionJobName' => $log->data,
+                'TranscriptionJobName' => $log->s3,
             ]);
 
             $log->src = $transcriptionResult->get('TranscriptionJob')['TranscriptionJobStatus'];
@@ -73,7 +73,7 @@ class Transcribe implements ShouldQueue
         if (!$log->complete) {
             $status = array();
             $status = $awsTranscribeClient->getTranscriptionJob([
-                'TranscriptionJobName' => $log->data
+                'TranscriptionJobName' => $log->s3
             ]);
 
             $log->src = $status->get('TranscriptionJob')['TranscriptionJobStatus'];
@@ -94,8 +94,11 @@ class Transcribe implements ShouldQueue
                 $sub = $video->subtitles;
                 $subtitles = (new Subtitle)->createSRT($items);
 
+                $sub->data = serialize($subtitles['json']);
+                $sub->save();
+
                 $txt = fopen(storage_path("app/$sub->src"), "w") or die("Unable to open file!");
-                fwrite($txt, $subtitles);
+                fwrite($txt, $subtitles['srt']);
                 fclose($txt);
             }  else {
                 sleep(5);
