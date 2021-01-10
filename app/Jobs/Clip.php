@@ -56,8 +56,8 @@ class Clip implements ShouldQueue
         $command = "ffmpeg -ss $this->start_time -i $videoPath -vcodec copy -to $end_time $newTitle";
 
         try {
-            \Log::info($command);
-            \Log::info("\n");
+            // \Log::info($command);
+            // \Log::info("\n");
             shell_exec($command);
             return true;
         } catch (\Exception $ex) {

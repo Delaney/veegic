@@ -92,21 +92,28 @@ class SubtitlesController extends Controller
                 if ($request->input('file')) {
                     $exists = file_exists($path);
                     if ($exists) {
-                    $headers = array(
-                        'Content-Disposition' => 'attachment;filename=subtitles.srt',
-                        'Content-Type' => 'application/octet-stream'
-                    );
-        
-                    return response()->download(storage_path("app/$sub->src"), $sub->title, $headers);
+                        $headers = array(
+                            'Content-Disposition' => 'attachment;filename=subtitles.srt',
+                            'Content-Type' => 'application/octet-stream'
+                        );
+            
+                        return response()->download(storage_path("app/$sub->src"), $sub->title, $headers);
+                    } else {
+                        return response()->json([
+                            'subtitles' => false,
+                            'message' => 'Subtitle file not found'
+                        ], 400);
+                    }
+                } else {
+                    return response()->json(unserialize($sub->data));
                 }
-                return response()->json(unserialize($sub->data));
             } else {
                 return response()->json([
                     'error' => true,
                     'message' => 'Transcription job not done'
                 ]);
             }
-        }
 
+        }
     }
 }

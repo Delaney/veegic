@@ -47,7 +47,7 @@ class BurnSRT implements ShouldQueue
         
         $videoPath = storage_path('app') . '/' . $video->src;
         $subtitlePath = storage_path('app') . '/' . $subtitle->src;
-        $newTitle = storage_path('app') . $log->result_src;
+        $newTitle = storage_path('app') . '/' . $log->result_src;
 
         $command = "ffmpeg -i $videoPath -vf subtitles=$subtitlePath -c:a copy $newTitle";
         
