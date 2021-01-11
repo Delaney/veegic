@@ -29,6 +29,7 @@ Route::group(['middleware' => 'throttle:10,1'], function () {
 
     Route::group(['middleware' => 'api.token'], function () {
         Route::get('/videos', 'VideoController@index');
+        Route::get('/videos/delete/{slug}', 'VideoController@deleteVideo');
 
         //Jobs
         Route::post('/upload', 'VideoController@upload'); // In: file | Out: file_info

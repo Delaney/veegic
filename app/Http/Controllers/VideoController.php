@@ -12,6 +12,7 @@ use App\Models\Video;
 use Aws\S3\S3Client;
 use Carbon\Carbon;
 use App\Models\EditLog;
+use App\Models\Subtitles;
 use App\Watermark;
 
 class VideoController extends Controller
@@ -106,6 +107,23 @@ class VideoController extends Controller
                 'error' => $e->getMessage()
             ], 400);
         }
+    }
+
+    public function deleteVideo($slug)
+    {
+        $video = Video::where('slug', $slug)->first();
+        if ($video->subtitles) {
+            $sub = Subtitles::where('video_id', $video->id)->first();
+            unlink(storage_path('app') . '/' . $sub->src);
+            $sub->delete();
+        }
+
+        unlink(storage_path('app') . '/' . $video->src);
+        $video->delete();
+
+        return response()->json([
+            'success'   => true
+        ]);
     }
 
     public function download($slug)
