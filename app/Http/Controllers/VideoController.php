@@ -37,7 +37,7 @@ class VideoController extends Controller
             return response()->json([
                 'error' => 'invalid_input',
                 'message' => $error
-            ]);
+            ], 400);
         }
 
         $file = $request->file('video');
@@ -52,7 +52,7 @@ class VideoController extends Controller
         }
         $user = $request->input('user');
 
-        $name = time() . '_' . Str::random(8);
+        $name = time() . '_' . Str::random(8) . '.' . $request->file('video')->getClientOriginalExtension();
         $fileName = Str::of($name)->basename('.' . $request->file('video')->getClientOriginalExtension());
         
         $video_url = $this->uploadToS3($request, $name);
@@ -73,7 +73,7 @@ class VideoController extends Controller
 
         return response()->json([
             'success'   => true,
-            'slug'   => $video
+            'slug'   => $video->slug
         ]);
     }
 
