@@ -8,15 +8,18 @@ use App\Jobs\Resize;
 use App\Jobs\Clip;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 use App\Models\Video;
 use App\Models\EditLog;
+use App\Subtitle;
 
 class FFMpegController extends Controller
 {
     public function burnSRT(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'slug' => 'required'
+            'slug'          => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -45,7 +48,27 @@ class FFMpegController extends Controller
             $log->type = 'Burn Subtitles';
             $log->result_src = 'jobs/' . time() . '_' . uniqid() . '.' . $video->extension;
             $log->save();
-            BurnSRT::dispatch($log->id)->onQueue('BurnSubtitles');
+
+            $srt = null;
+            if ($request->input('srtObjects')) {
+                $subs = Subtitle::objToSrt($request->input('srtObjects'));
+
+                $name = time() . '_' . Str::random(8) . '.srt';
+                $srt = "subtitles/$name";
+                $txt = fopen(storage_path("app/subtitles/$name"), "w") or die("Unable to open file!");
+                fwrite($txt, $subs);
+                fclose($txt);
+            } else if ($request->file('srt')) {
+                $name = time() . '_' . Str::random(8) . '.srt';
+                $srt = $request->file('srt')->storeAs('subtitles', $name);
+            }
+
+            $options = [];
+            if ($request->input('options')) {
+                $options = $request->input('options');
+            }
+
+            BurnSRT::dispatch($log->id, $options, $srt);
 
             return response()->json([
                 'job' => $log->id,
@@ -93,7 +116,7 @@ class FFMpegController extends Controller
             $log->save();
                 
             if ($user_id === $user->id) {
-                Resize::dispatch($log->id, $request->input('ratio'))->onQueue('Resize');
+                Resize::dispatch($log->id, $request->input('ratio'));
     
                 return response()->json([
                     'job' => $log->id,
@@ -147,7 +170,7 @@ class FFMpegController extends Controller
             $log->save();
 
             if ($user_id === $user->id) {
-                Clip::dispatch($log->id, $start_time, $end_time)->onQueue('Clip');
+                Clip::dispatch($log->id, $start_time, $end_time);
     
                 return response()->json([
                     'job' => $log->id,

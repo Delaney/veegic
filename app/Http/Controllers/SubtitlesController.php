@@ -47,7 +47,7 @@ class SubtitlesController extends Controller
                     'result_src'    => "subtitles/$video->title.srt"
                 ]);
         
-                Transcribe::dispatch($log->id, $slug)->onQueue('Subtitles');
+                Transcribe::dispatch($log->id, $slug);
                 
                 return response()->json([
                     'success' => true,

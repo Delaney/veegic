@@ -17,16 +17,19 @@ class BurnSRT implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     private $log_id;
-    private $user;
+    private $srt;
+    private $options;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($log_id)
+    public function __construct($log_id, $options = [], $srt = null)
     {
         $this->log_id = $log_id;
+        $this->srt = $srt;
+        $this->options = $options;
     }
 
     /**
@@ -38,18 +41,32 @@ class BurnSRT implements ShouldQueue
     {
         $log = EditLog::find($this->log_id);
         $video = Video::find($log->video_id);
-        $subtitle = $video->subtitles;
 
-        if (!$subtitle) return false;
-
-        // $videoPath = storage_path('app') . '\\' . (str_replace('/','\\', $video->src));
-        // $subtitlePath = 'storage/app/' . $subtitle->src;
+        if ($this->srt) {
+            $subtitlePath = 'storage/app/' . $this->srt;
+        } else {
+            $subtitle = $video->subtitles;
+    
+            if (!$subtitle) return false;
+    
+            $subtitlePath = 'storage/app/' . $subtitle->src;
+        }
         
+        /* LOCAL */
+        // $videoPath = storage_path('app') . '\\' . (str_replace('/','\\', $video->src));
+        // $newTitle = storage_path('app') . '\\' . (str_replace('/','\\', $log->result_src));
+        
+        /* CLOUD */
         $videoPath = storage_path('app') . '/' . $video->src;
-        $subtitlePath = storage_path('app') . '/' . $subtitle->src;
         $newTitle = storage_path('app') . '/' . $log->result_src;
 
-        $command = "ffmpeg -i $videoPath -vf subtitles=$subtitlePath -c:a copy $newTitle";
+        $optionStr = '';
+        if (count($this->options)) $optionStr = $this->setOptions($this->options);
+
+        $fontdir = 'fontsdir=' . storage_path('fonts');
+        $fontdir = 'fontsdir=storage/fonts';
+
+        $command = "ffmpeg -i $videoPath -vf \"subtitles=$subtitlePath:$fontdir:$optionStr\" -c:a copy $newTitle";
         
         try {
             // \Log::info($command);
@@ -58,6 +75,27 @@ class BurnSRT implements ShouldQueue
             // return true;
         } catch (\Exception $ex) {
             \Log::error("\n\n" . $ex . "\n\n");
+        }
+    }
+
+    private function setOptions($options) {
+        if (count($options)) {
+            $str = '';
+            
+            if (array_key_exists('font_name', $options) && $options['font_name']) {
+                $str = $str . 'fontname=' . $options['font_name'] . ',';
+            }
+            if (array_key_exists('font_size', $options) && $options['font_size']) {
+                $str = $str . 'Fontsize=' . $options['font_size'] . ',';
+            }
+            if (array_key_exists('font_color', $options) && $options['font_color']) {
+                $bgr = substr($options['font_color'],4,2) . substr($options['font_color'],2,2) . substr($options['font_color'],0,2);
+                $color = hexdec($bgr);
+                $str = $str . 'PrimaryColour=' . $color . ',';
+            }
+            
+            $result = "force_style='$str'";
+            return $result;
         }
     }
 }

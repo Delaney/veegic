@@ -77,9 +77,24 @@ class Subtitle
             'json'  => $res,
             'srt'   => $result
         ];
-	}
+    }
+    
+    public static function objToSrt($arr)
+    {
+        $result = "";
+
+        foreach($arr as $obj) {
+            $result = "$result\n{$obj['index']}\n";
+            $start = self::formatTime($obj['start_time']);
+            $end = self::formatTime($obj['end_time']);
+            $result = "${result}${start} --> ${end}\n";
+            $result = "${result}{$obj['sentence']}\n\n";
+        }
+
+        return $result;
+    }
 	
-	public function formatTime($t) {
+	public static function formatTime($t) {
 		try {
 			$a = explode('.', $t);
 			$date = new Carbon(0);
