@@ -43,13 +43,19 @@ class BurnSRT implements ShouldQueue
         $video = Video::find($log->video_id);
 
         if ($this->srt) {
+            /* LOCAL */
             $subtitlePath = 'storage/app/' . $this->srt;
+            /* CLOUD */
+            $subtitlePath = storage_path('app') . '/' . $this->srt;
         } else {
             $subtitle = $video->subtitles;
     
             if (!$subtitle) return false;
-    
+            
+            /* LOCAL */    
             $subtitlePath = 'storage/app/' . $subtitle->src;
+            /* CLOUD */
+            $subtitlePath = storage_path('app') . '/' . $this->srt;
         }
         
         /* LOCAL */
@@ -61,12 +67,13 @@ class BurnSRT implements ShouldQueue
         $newTitle = storage_path('app') . '/' . $log->result_src;
 
         $optionStr = '';
-        if (count($this->options)) $optionStr = $this->setOptions($this->options);
+        $fontdir = '';
+        if (count($this->options)) {
+            $optionStr = $this->setOptions($this->options);
+            $fontdir = ':fontsdir=storage/fonts';
+        }
 
-        $fontdir = 'fontsdir=' . storage_path('fonts');
-        $fontdir = 'fontsdir=storage/fonts';
-
-        $command = "ffmpeg -i $videoPath -vf \"subtitles=$subtitlePath:$fontdir:$optionStr\" -c:a copy $newTitle";
+        $command = "ffmpeg -i $videoPath -vf \"subtitles=${subtitlePath}${fontdir}${optionStr}\" -c:a copy $newTitle";
         
         try {
             // \Log::info($command);
@@ -94,7 +101,7 @@ class BurnSRT implements ShouldQueue
                 $str = $str . 'PrimaryColour=' . $color . ',';
             }
             
-            $result = "force_style='$str'";
+            $result = ":force_style='$str'";
             return $result;
         }
     }

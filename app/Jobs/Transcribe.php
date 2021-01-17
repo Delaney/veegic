@@ -102,7 +102,7 @@ class Transcribe implements ShouldQueue
                 fclose($txt);
             }  else {
                 sleep(5);
-                self::dispatch($log->id, $video->slug)->onQueue('Subtitles');
+                self::dispatch($log->id, $video->slug);
             }
         }
     }
