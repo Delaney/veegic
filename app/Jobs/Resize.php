@@ -19,18 +19,21 @@ class Resize implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     private $log_id;
-
-    private $ratio;
+    private $ratioX;
+    private $ratioY;
+    private $type;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($log_id, $ratio)
+    public function __construct($log_id, $ratioX, $ratioY, $type)
     {
         $this->log_id = $log_id;
-        $this->ratio = $ratio;
+        $this->ratioX = $ratioX;
+        $this->ratioY = $ratioY;
+        $this->type = $type;
     }
 
     /**
@@ -46,7 +49,13 @@ class Resize implements ShouldQueue
         $cmd = "ffprobe -v error -show_entries stream=width,height -of csv=p=0:s=x $videoPath";
         $resolution = shell_exec($cmd);
         $arr = explode('x', $resolution);
-        $dimensions = $this->getNewSize(trim($arr[0]), trim($arr[1]), $this->ratio);
+        if ($this->type == 'ratio') {
+            $dimensions = $this->getNewSize(trim($arr[0]), trim($arr[1]), $this->ratioX, $this->ratioY);
+        } else {
+            $dimensions = new StdClass();
+            $dimensions->width = $this->ratioX;
+            $dimensions->height = $this->ratioY;
+        }
 
         FFMpeg::open($log->src)
             ->export()
@@ -59,14 +68,14 @@ class Resize implements ShouldQueue
             ->save($log->result_src);
     }
 
-    public function getNewSize($width, $height, $ratio) {
+    public function getNewSize($width, $height, $ratioX, $ratioY) {
         $obj = new stdClass();
-        if ($ratio['x'] > $ratio['y']) {
-            $height = ceil(($width * $ratio['y']) / $ratio['x']);
+        if ($ratioX > $ratioY) {
+            $height = ceil(($width * $ratioY) / $ratioX);
             $obj->width = $width;
             $obj->height = ($height % 2 == 0) ? $height : $height + 1;
-        } else if ($ratio['y'] > $ratio['x']) {
-            $width = ceil(($height * $ratio['x']) / $ratio['y']);
+        } else if ($ratioY > $ratioX) {
+            $width = ceil(($height * $ratioX) / $ratioY);
             $obj->height = $height;
             $obj->width = ($width % 2 == 0) ? $width : $width + 1;
         } else {

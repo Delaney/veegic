@@ -108,15 +108,23 @@ class FFMpegController extends Controller
             $log->video_id = $check['video_id'];
             $user_id = $check['user_id'];
 
-            $ratioX = $request->input('ratio')['x'];
-            $ratioY = $request->input('ratio')['y'];
+            if ($request->input('dimensions') && count($request->input('dimensions'))) {
+                $ratioX = $request->input('dimensions')['x'];
+                $ratioY = $request->input('dimensions')['y'];
+                $log->type = "Change size: $ratioX:$ratioY";
+                $type = 'resize';
+            } else {
+                $ratioX = $request->input('ratio')['x'];
+                $ratioY = $request->input('ratio')['y'];
+                $log->type = "Change aspect ratio: $ratioX:$ratioY";
+                $type = 'ratio';
+            }
 
-            $log->type = 'Change aspect: ';
             $log->result_src = 'jobs/' . time() . '_' . uniqid() . '.' . substr($log->src, -3);
             $log->save();
                 
             if ($user_id === $user->id) {
-                Resize::dispatch($log->id, $request->input('ratio'));
+                Resize::dispatch($log->id, $ratioX, $ratioY, $type);
     
                 return response()->json([
                     'job' => $log->id,
