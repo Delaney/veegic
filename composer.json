@@ -12,6 +12,7 @@
         "aws/aws-sdk-php": "^3.165",
         "fideloper/proxy": "^4.4",
         "fruitcake/laravel-cors": "^2.0",
+        "google/cloud-translate": "^1.9",
         "guzzlehttp/guzzle": "^7.0.1",
         "laravel/framework": "^8.12",
         "laravel/jetstream": "^1.6",

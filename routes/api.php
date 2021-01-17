@@ -37,6 +37,9 @@ Route::group(['middleware' => 'throttle:1000,1'], function () {
         Route::post('/burnSRT', 'FFMpegController@burnSRT'); // In: slug / id | Out: id
         Route::post('/resize', 'FFMpegController@resize');
         Route::post('/clip', 'FFMpegController@clip');
+
+        Route::post('/translate', 'GoogleController@translate');
+        Route::get('/translate/languages', 'GoogleController@getLanguages');
         
         //Results
         Route::get('/download/{slug}', 'VideoController@download');
