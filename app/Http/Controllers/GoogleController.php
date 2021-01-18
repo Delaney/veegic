@@ -40,12 +40,18 @@ class GoogleController extends Controller
             'format'    => 'text',
         ]);
 
-        foreach($arr as $key=>$obj) {
+        $n = 0;
+        foreach($arr as $obj) {
             $o = new stdClass();
             $o->index = $obj['index'];
             $o->start_time = $obj['start_time'];
             $o->end_time = $obj['end_time'];
-            $o->sentence = $result[$key]['text'];
+            if ($obj['sentence']) {
+                $o->sentence = $result[$n]['text'];
+                $n++;
+            } else {
+                $o->sentence = $obj['sentence'];
+            }
 
             array_push($resultArray, $o);
         }
