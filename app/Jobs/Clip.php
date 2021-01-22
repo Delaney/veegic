@@ -53,7 +53,8 @@ class Clip implements ShouldQueue
 		
         $cmd = "ffprobe -i $videoPath -show_format -v quiet | sed -n 's/duration=//p'";
         $end_time = ($this->end_time) ? $this->end_time : $this->toTimecode(shell_exec($cmd));
-        $command = "ffmpeg -ss $this->start_time -i $videoPath -vcodec copy -to $end_time $newTitle";
+        $command = "ffmpeg -ss $this->start_time -i $videoPath -vcodec copy -t $end_time $newTitle";
+        // $command = "ffmpeg -t $end_time -i $videoPath -ss $this->start_time $newTitle";
 
         try {
             // \Log::info($command);
