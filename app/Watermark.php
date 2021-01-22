@@ -14,7 +14,7 @@ class Watermark
 		$videoPath = storage_path('app') . '/' . $src;
 		$newTitle = storage_path('app/public') . '/' . $src;
 		
-		$command = "ffmpeg -i $videoPath -vf drawtext=text='Veegic':x=10:y=H-th-10:fontsize=36:fontcolor=white -y $newTitle";
+		$command = "ffmpeg -i $videoPath -vf drawtext=text='Veegic':x=w-tw-10:y=10:fontsize=24:fontcolor=white -y $newTitle";
 		
 		shell_exec($command);
 

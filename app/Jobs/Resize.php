@@ -2,12 +2,8 @@
 namespace App\Jobs;
 
 use App\Models\EditLog;
-use FFMpeg\Coordinate\Dimension;
-use FFMpeg\FFProbe;
-use FFMpeg\Format\Video\X264;
 use ProtoneMedia\LaravelFFMpeg\Support\FFMpeg;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
