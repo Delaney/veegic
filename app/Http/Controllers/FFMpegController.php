@@ -82,19 +82,6 @@ class FFMpegController extends Controller
 
     public function resize(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'ratio.x' => 'required',
-            'ratio.y' => 'required',
-        ]);
-
-        if ($validator->fails()) {
-            $error = $validator->errors()->first();
-            return response()->json([
-                'error' => 'invalid_input',
-                'message' => $error
-            ]);
-        }
-
         if ($request->input('slug') || $request->input('id')) {
             $user = $request->input('user');
             $log = new EditLog();
