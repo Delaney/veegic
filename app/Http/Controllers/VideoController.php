@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use ProtoneMedia\LaravelFFMpeg\Support\FFMpeg;
 use App\Models\Video;
 use Aws\S3\S3Client;
 use Carbon\Carbon;
@@ -142,27 +143,35 @@ class VideoController extends Controller
         $user = $request->input('user');
         $log = EditLog::find($log_id);
         if ($log && $log->user_id == $user->id) {
-            if ($log->s3) {
-                return response()->json([
-                    'url' => $log->s3
-                ]);
-            }
-
             $result = $log->result_src;
             $path = storage_path('app/' . $result);
 
-            $exists = file_exists($path);
-
-            if ($exists) {
-                $size = filesize($path);
-                
+            $progress = $log->progress;
+            if ($progress == 100) {
                 $name = explode('/', $result);
                 $len = count($name);
                 $name = $name[$len - 1];
-                
-                if ($size > 0) {
-                    $path = Watermark::add($result);
 
+                $format = $request->input('format');
+                if ($format && $format != substr($result, -3)) {
+                    $newTitle = substr($result, 0, (strlen($result) - 3));
+                    $newFile = "${newTitle}${format}";
+
+                    FFMpeg::open($result)
+                        ->export()
+                        ->inFormat(new \FFMpeg\Format\Video\X264('libmp3lame'))
+                        ->save($newFile);
+                    $result = $newFile;
+                    $name = explode('/', $result);
+                    $len = count($name);
+                    $name = $name[$len - 1];
+                }
+                
+                $path = Watermark::add($result);
+                
+                if ($request->input('final')) {
+                    // $path = Watermark::add($result);
+                    
                     $region = config('aws.region');
                     $access_key = config('aws.access_key');
                     $secret_access_key = config('aws.secret_access_key');
@@ -184,29 +193,36 @@ class VideoController extends Controller
                             'Body'      =>  fopen($path, 'r'),
                             'ACL'       =>  'public-read',
                         ]);
-                        $video_url = $result->get('ObjectURL');
-                        $log->s3 = $video_url;
+                        $path = $result->get('ObjectURL');
+                        $log->s3 = $path;
                         $log->save();
 
                         return response()->json([
-                            'url' => $video_url
+                            'complete' => true,
+                            'url' => $path
                         ]);
                     } catch (\Exception $e) {
                         return response()->json([
                             'error' => $e->getMessage()
                         ], 400);
                     }
-                    // return response()->download($path, $name);
-                } else {
-                    return response()->json([
-                        'status' => false
-                    ]);
                 }
+                //  else {
+                //     file_put_contents(public_path('storage/' . $result), file_get_contents($path));
+                //     $path = public_path('storage/' . $result);
+                // }
+                return response()->json([
+                    'complete' => true,
+                    'url' => 'storage/' . $result
+                ]);
+                    
+                
+            } else {
+                return response()->json([
+                    'complete' => false,
+                    'progress' => $progress
+                ]);
             }
-
-            return response()->json([
-                'error' => 'Video not found'
-            ]);
         } else {
             return response()->json([
                 'error' => 'Wrong id'
