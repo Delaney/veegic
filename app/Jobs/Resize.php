@@ -56,8 +56,10 @@ class Resize implements ShouldQueue
         FFMpeg::open($log->src)
             ->export()
             ->resize($dimensions->width, $dimensions->height)
-            ->onProgress(function ($percentage, $remaining, $rate) {
-                \Log::info("{$percentage}% done, {$remaining} seconds left at rate: {$rate}");
+            ->onProgress(function ($percentage, $remaining, $rate) use ($log) {
+                $log->progress = $percentage;
+                $log->save();
+                // \Log::info("Resizing: {$percentage}% done, {$remaining} seconds left at rate: {$rate}");
             })
             ->toDisk('local')
             ->inFormat(new \FFMpeg\Format\Video\X264('libmp3lame'))

@@ -4,7 +4,7 @@ namespace App\Jobs;
 
 use App\Models\EditLog;
 use App\Models\Video;
-use Exception;
+use ProtoneMedia\LaravelFFMpeg\Support\FFMpeg;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -44,7 +44,7 @@ class BurnSRT implements ShouldQueue
 
         if ($this->srt) {
             /* LOCAL */
-            $subtitlePath = 'storage/app/' . $this->srt;
+            // $subtitlePath = 'storage/app/' . $this->srt;
             /* CLOUD */
             $subtitlePath = storage_path('app') . '/' . $this->srt;
         } else {
@@ -53,7 +53,7 @@ class BurnSRT implements ShouldQueue
             if (!$subtitle) return false;
             
             /* LOCAL */    
-            $subtitlePath = 'storage/app/' . $subtitle->src;
+            // $subtitlePath = 'storage/app/' . $subtitle->src;
             /* CLOUD */
             $subtitlePath = storage_path('app') . '/' . $this->srt;
         }
@@ -73,16 +73,34 @@ class BurnSRT implements ShouldQueue
             $fontdir = ':fontsdir=storage/fonts';
         }
 
-        $command = "ffmpeg -i $videoPath -vf \"subtitles=${subtitlePath}${fontdir}${optionStr}\" -c:a copy $newTitle";
+        // $command = "ffmpeg -i $videoPath -vf \"subtitles=${subtitlePath}${fontdir}${optionStr}\" -c:a copy $newTitle";
+        // \Log::info($command);
+        // \Log::info("\n\n");
         
-        try {
-            // \Log::info($command);
-            // \Log::info("\n");
-            shell_exec($command);
-            // return true;
-        } catch (\Exception $ex) {
-            \Log::error("\n\n" . $ex . "\n\n");
-        }
+        // try {
+        //     // \Log::info($command);
+        //     // \Log::info("\n");
+        //     shell_exec($command);
+        //     // return true;
+        // } catch (\Exception $ex) {
+        //     \Log::error("\n\n" . $ex . "\n\n");
+        // }
+
+        $customFilter = new \FFMpeg\Filters\Video\CustomFilter("subtitles=${subtitlePath}${fontdir}${optionStr}");
+
+        FFMpeg::open($log->src)
+            ->export()
+            // ->addFilter("subtitles=${subtitlePath}${fontdir}${optionStr}", 1)
+            ->addFilter($customFilter)
+            // ->addFilter("\"subtitles=${subtitlePath}${fontdir}${optionStr}\"")
+            ->onProgress(function ($percentage, $remaining, $rate) use ($log) {
+                $log->progress = $percentage;
+                $log->save();
+                // \Log::info("Burning Subtitles: {$percentage}% done, {$remaining} seconds left at rate: {$rate}");
+            })
+            ->toDisk('local')
+            ->inFormat(new \FFMpeg\Format\Video\X264('libmp3lame'))
+            ->save($log->result_src);
     }
 
     private function setOptions($options) {

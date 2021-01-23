@@ -2,10 +2,6 @@
 namespace App\Jobs;
 
 use App\Models\EditLog;
-// use FFMpeg\FFMpeg;
-use FFMpeg\Coordinate\Dimension;
-use FFMpeg\Coordinate\TimeCode;
-use FFMpeg\Format\Video\X264;
 use ProtoneMedia\LaravelFFMpeg\Support\FFMpeg;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -45,25 +41,44 @@ class Clip implements ShouldQueue
     {
         $log = EditLog::find($this->log_id);
 
-        // $videoPath = storage_path('app') . '\\' . (str_replace('/','\\', $log->src));
-        // $newTitle = storage_path('app') . '\\' . $log->result_src;
+        $start_time = "$this->start_time:00";
+        $diff = strtotime($this->end_time) - strtotime($this->start_time);
+        
+        $start = \FFMpeg\Coordinate\TimeCode::fromString($start_time);
+        $duration = \FFMpeg\Coordinate\TimeCode::fromSeconds($diff);        
+        $clipFilter = new \FFMpeg\Filters\Video\ClipFilter($start, $duration);
 
-        $videoPath = storage_path('app') . '/' . $log->src;
-        $newTitle = storage_path('app') . '/' . $log->result_src;
+        FFMpeg::open($log->src)
+            ->export()
+            ->addFilter($clipFilter)
+            ->onProgress(function ($percentage, $remaining, $rate) use ($log) {
+                $log->progress = $percentage;
+                $log->save();
+                // \Log::info("Trimming: {$percentage}% done, {$remaining} seconds left at rate: {$rate}");
+            })
+            ->toDisk('local')
+            ->inFormat(new \FFMpeg\Format\Video\X264('libmp3lame'))
+            ->save($log->result_src);
+
+        // // $videoPath = storage_path('app') . '\\' . (str_replace('/','\\', $log->src));
+        // // $newTitle = storage_path('app') . '\\' . $log->result_src;
+
+        // $videoPath = storage_path('app') . '/' . $log->src;
+        // $newTitle = storage_path('app') . '/' . $log->result_src;
 		
-        $cmd = "ffprobe -i $videoPath -show_format -v quiet | sed -n 's/duration=//p'";
-        $end_time = ($this->end_time) ? $this->end_time : $this->toTimecode(shell_exec($cmd));
-        $command = "ffmpeg -ss $this->start_time -i $videoPath -vcodec copy -t $end_time $newTitle";
-        // $command = "ffmpeg -t $end_time -i $videoPath -ss $this->start_time $newTitle";
+        // $cmd = "ffprobe -i $videoPath -show_format -v quiet | sed -n 's/duration=//p'";
+        // $end_time = ($this->end_time) ? $this->end_time : $this->toTimecode(shell_exec($cmd));
+        // $command = "ffmpeg -ss $this->start_time -i $videoPath -vcodec copy -t $end_time $newTitle";
+        // // $command = "ffmpeg -t $end_time -i $videoPath -ss $this->start_time $newTitle";
 
-        try {
-            // \Log::info($command);
-            // \Log::info("\n");
-            shell_exec($command);
-            return true;
-        } catch (\Exception $ex) {
-            \Log::error("\n\n" . $ex . "\n\n");
-        }
+        // try {
+        //     // \Log::info($command);
+        //     // \Log::info("\n");
+        //     shell_exec($command);
+        //     return true;
+        // } catch (\Exception $ex) {
+        //     \Log::error("\n\n" . $ex . "\n\n");
+        // }
     }
 
     protected function toTimecode($seconds) {
