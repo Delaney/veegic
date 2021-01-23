@@ -23,6 +23,7 @@ class EditLog extends Model
         'type',
         'complete',
         'result_src',
-        's3'
+        's3',
+        'progress'
     ];
 }
