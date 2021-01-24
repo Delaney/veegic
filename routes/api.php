@@ -19,31 +19,29 @@ header('Access-Control-Expose-Headers: *');
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+//     return $request->user();
+// });
 
-Route::group(['middleware' => 'throttle:1000,1'], function () {
-    Route::post('login', 'AuthController@login');
-    Route::post('register', 'AuthController@register');
+Route::post('login', 'AuthController@login');
+Route::post('register', 'AuthController@register');
 
-    Route::group(['middleware' => 'api.token'], function () {
-        Route::get('/videos', 'VideoController@index');
-        Route::get('/videos/delete/{slug}', 'VideoController@deleteVideo');
+Route::group(['middleware' => 'api.token'], function () {
+    Route::get('/videos', 'VideoController@index');
+    Route::get('/videos/delete/{slug}', 'VideoController@deleteVideo');
 
-        //Jobs
-        Route::post('/upload', 'VideoController@upload'); // In: file | Out: file_info
-        Route::post('/transcribe', 'SubtitlesController@transcribe'); // In: slug / id | Out: id
-        Route::post('/burnSRT', 'FFMpegController@burnSRT'); // In: slug / id | Out: id
-        Route::post('/resize', 'FFMpegController@resize');
-        Route::post('/clip', 'FFMpegController@clip');
+    //Jobs
+    Route::post('/upload', 'VideoController@upload'); // In: file | Out: file_info
+    Route::post('/transcribe', 'SubtitlesController@transcribe'); // In: slug / id | Out: id
+    Route::post('/burnSRT', 'FFMpegController@burnSRT'); // In: slug / id | Out: id
+    Route::post('/resize', 'FFMpegController@resize');
+    Route::post('/clip', 'FFMpegController@clip');
 
-        Route::post('/translate', 'GoogleController@translate');
-        Route::get('/translate/languages', 'GoogleController@getLanguages');
-        
-        //Results
-        Route::get('/download/{slug}', 'VideoController@download');
-        Route::get('/transcribe/{slug}', 'SubtitlesController@getSubtitles'); // In: id | Out: srt
-        Route::get('/result/{log_id}', 'VideoController@downloadResult');
-    });
+    Route::post('/translate', 'GoogleController@translate');
+    Route::get('/translate/languages', 'GoogleController@getLanguages');
+    
+    //Results
+    Route::get('/download/{slug}', 'VideoController@download');
+    Route::get('/transcribe/{slug}', 'SubtitlesController@getSubtitles'); // In: id | Out: srt
+    Route::get('/result/{log_id}', 'VideoController@downloadResult');
 });
