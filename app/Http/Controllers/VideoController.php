@@ -70,11 +70,18 @@ class VideoController extends Controller
         $video->extension = $request->file('video')->getClientOriginalExtension();
         $video->slug = $slug;
         $video->s3_url = $video_url;
+        
+        $dimensions = FFMpeg::open($video->src)
+        ->getVideoStream()
+        ->getDimensions();
+        
+        $video->dimensions = "{$dimensions->getWidth()}x{$dimensions->getHeight()}";
         $video->save();
 
         return response()->json([
             'success'   => true,
-            'slug'   => $video->slug
+            'slug'   => $video->slug,
+            'dimensions' => $video->dimensions
         ]);
     }
 

@@ -24,6 +24,7 @@ class EditLog extends Model
         'complete',
         'result_src',
         's3',
-        'progress'
+        'progress',
+        'dimensions'
     ];
 }
