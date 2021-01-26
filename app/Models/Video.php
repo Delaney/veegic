@@ -23,7 +23,8 @@ class Video extends Model
         'extension',
         'slug',
         's3_url',
-        'dimensions'
+        'dimensions',
+        'thumbnail'
     ];
 
     public function user()

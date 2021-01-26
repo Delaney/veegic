@@ -70,18 +70,25 @@ class VideoController extends Controller
         $video->extension = $request->file('video')->getClientOriginalExtension();
         $video->slug = $slug;
         $video->s3_url = $video_url;
+
+        $ffmpeg_video = FFMpeg::open($video->src);
         
-        $dimensions = FFMpeg::open($video->src)
-        ->getVideoStream()
-        ->getDimensions();
+        $dimensions = $ffmpeg_video
+            ->getVideoStream()
+            ->getDimensions();
+
+        $thumbnail = $ffmpeg_video->frame(\FFMpeg\Coordinate\TimeCode::fromSeconds(2))
+            ->save(storage_path('app/public') . '/' . "thumbnails/$fileName.jpg");
         
         $video->dimensions = "{$dimensions->getWidth()}x{$dimensions->getHeight()}";
+        $video->thumbnail = "thumbnails/$fileName.jpg";
         $video->save();
 
         return response()->json([
             'success'   => true,
             'slug'   => $video->slug,
-            'dimensions' => $video->dimensions
+            'dimensions' => $video->dimensions,
+            'thumbnail' => $video->thumbnail
         ]);
     }
 
