@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Video;
 use App\Models\EditLog;
 use App\Subtitle;
+use ProtoneMedia\LaravelFFMpeg\Support\FFMpeg;
 
 class FFMpegController extends Controller
 {
@@ -181,6 +182,125 @@ class FFMpegController extends Controller
             ], 400);
         }
 
+    }
+
+    public function getFrame(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'seconds' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            $error = $validator->errors()->first();
+            return response()->json([
+                'error' => 'invalid_input',
+                'message' => $error
+            ]);
+        }
+
+        if ($request->input('slug') || $request->input('id')) {
+            $user = $request->input('user');
+            $check = $this->checkSlugOrId($request);
+            if (array_key_exists('error', $check)) return $check['json'];
+
+            $src = $check['src'];
+            $user_id = $check['user_id'];
+
+            $seconds = $request->input('seconds');
+
+            $fileName = time() . '_' . uniqid() . '.jpg';
+
+            if ($user_id === $user->id) {
+                $media = FFMpeg::open($src);
+
+                $duration = $media->getDurationInSeconds();
+
+                if ($duration >= $seconds) {
+                        $media->frame(\FFMpeg\Coordinate\TimeCode::fromSeconds($seconds))
+                        ->save(storage_path('app/public') . '/' . "thumbnails/$fileName");
+
+                    // return response()->json([
+                    //     'success'   => true,
+                    //     'frame' => "thumbnails/$fileName"
+                    // ]);
+                    return response()->download(
+                        storage_path('app/public') . '/' . "thumbnails/$fileName",
+                    );
+                } else {
+                    return response()->json([
+                        'error' => true,
+                        'message' => 'Seconds value is greater than video duration'
+                    ], 400);    
+                }
+            } else {
+                return response()->json([
+                    'video' => false
+                ], 400);
+            }  
+        } else {
+            return response()->json([
+                'error' => 'Invalid request',
+            ], 400);
+        }
+    }
+
+    public function makeGIF(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'start_time'    => 'required',
+            'end_time'      => 'required',
+            'fps'           => 'required|in:4,8,10,12,24',
+            'scale'         => 'required|in:320,640'
+        ]);
+
+        if ($validator->fails()) {
+            $error = $validator->errors()->first();
+            return response()->json([
+                'error' => 'invalid_input',
+                'message' => $error
+            ]);
+        }
+
+        if ($request->input('slug') || $request->input('id')) {
+            $user = $request->input('user');
+            $check = $this->checkSlugOrId($request);
+            if (array_key_exists('error', $check)) return $check['json'];
+
+            $src = $check['src'];
+            $user_id = $check['user_id'];
+
+            $fileName = time() . '_' . uniqid() . '.gif';
+
+            if ($user_id === $user->id) {
+                $start_time = $request->input('start_time');
+                $end_time = $request->input('end_time');
+                $fps = $request->input('fps');
+                $scale = $request->input('scale');
+
+                $diff = strtotime($end_time) - strtotime($start_time);
+                $start_time = "$start_time:00";
+                
+                $start = \FFMpeg\Coordinate\TimeCode::fromString($start_time);
+
+                $media = FFMpeg::open($src);
+
+                $dimensions = new \FFMpeg\Coordinate\Dimension($scale, 1);
+                
+                $res = $media
+                    ->gif($start, $dimensions, $diff)
+                    ->save(storage_path('app/public') . '/' . "gif/$fileName");
+
+                return response()->download(storage_path('app/public') . '/' . "gif/$fileName", $fileName);
+                } else {
+                return response()->json([
+                    'video' => false
+                ], 400);
+            }  
+        } else {
+            return response()->json([
+                'error' => 'Invalid request',
+            ], 400);
+        }
     }
 
     public function checkSlugOrId(Request $request)

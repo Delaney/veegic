@@ -37,6 +37,10 @@ Route::group(['middleware' => 'api.token'], function () {
     Route::post('/resize', 'FFMpegController@resize');
     Route::post('/clip', 'FFMpegController@clip');
 
+    //Immediate
+    Route::post('/get_frame', 'FFMpegController@getFrame');
+    Route::post('/make_gif', 'FFMpegController@makeGIF');
+
     Route::post('/translate', 'GoogleController@translate');
     Route::get('/translate/languages', 'GoogleController@getLanguages');
     
