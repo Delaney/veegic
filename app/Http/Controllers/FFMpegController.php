@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\BurnSRT;
-use App\Jobs\TrimVideo;
 use App\Jobs\Resize;
 use App\Jobs\Clip;
+use App\Jobs\ProgressBar;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -184,6 +184,50 @@ class FFMpegController extends Controller
 
     }
 
+    public function addProgressBar(Request $request)
+    {
+        if ($request->input('slug') || $request->input('id')) {
+            $user = $request->input('user');
+            $log = new EditLog();
+            $log->user_id = $user->id;
+            $user_id = 0;
+            
+            $check = $this->checkSlugOrId($request);
+            if (array_key_exists('error', $check)) return $check['json'];
+
+            $log->src = $check['src'];
+            $log->video_id = $check['video_id'];
+            $user_id = $check['user_id'];
+
+            $color = $request->input('color');
+            $height = $request->input('height');
+
+            $log->type = "Add progress bar | Height=${height}, Color=${color}";
+
+            $log->result_src = 'jobs/' . time() . '_' . uniqid() . '.' . substr($log->src, -3);
+            $log->save();
+            
+                
+            if ($user_id === $user->id) {
+                ProgressBar::dispatch($log->id, $color, $height);
+    
+                return response()->json([
+                    'job' => $log->id,
+                ], 200);
+            } else {
+                return response()->json([
+                    'error'     => true,
+                    'message'   => 'Unauthorized'
+                ], 400);
+            }
+        } else {
+            return response()->json([
+                'error' => 'Invalid request',
+            ], 400);
+        }
+
+    }
+
     public function getFrame(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -249,8 +293,7 @@ class FFMpegController extends Controller
         $validator = Validator::make($request->all(), [
             'start_time'    => 'required',
             'end_time'      => 'required',
-            'fps'           => 'required|in:4,8,10,12,24',
-            'scale'         => 'required|in:320,640'
+            'scale'         => 'required|in:240,320,640,720'
         ]);
 
         if ($validator->fails()) {

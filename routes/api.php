@@ -36,6 +36,7 @@ Route::group(['middleware' => 'api.token'], function () {
     Route::post('/burnSRT', 'FFMpegController@burnSRT'); // In: slug / id | Out: id
     Route::post('/resize', 'FFMpegController@resize');
     Route::post('/clip', 'FFMpegController@clip');
+    Route::post('/progress_bar', 'FFMpegController@addProgressBar');
 
     //Immediate
     Route::post('/get_frame', 'FFMpegController@getFrame');
