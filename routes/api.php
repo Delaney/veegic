@@ -29,9 +29,12 @@ Route::post('register', 'AuthController@register');
 Route::group(['middleware' => 'api.token'], function () {
     Route::get('/videos', 'VideoController@index');
     Route::get('/videos/delete/{slug}', 'VideoController@deleteVideo');
+    Route::post('/upload', 'VideoController@upload'); // In: file | Out: file_info
+    Route::post('upload_link', 'VideoController@uploadLink');
+
+    Route::post('/videos/save_progress', 'VideoController@saveProgress');
 
     //Jobs
-    Route::post('/upload', 'VideoController@upload'); // In: file | Out: file_info
     Route::post('/transcribe', 'SubtitlesController@transcribe'); // In: slug / id | Out: id
     Route::post('/burnSRT', 'FFMpegController@burnSRT'); // In: slug / id | Out: id
     Route::post('/resize', 'FFMpegController@resize');

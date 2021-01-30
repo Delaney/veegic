@@ -23,10 +23,25 @@ class VideoController extends Controller
         $user = $request->input('user');
 
         if ($user) {
-            return $user->videos;
+            $videos = $user->videos->toArray();
+            $data = array_map(function($video) {
+                if ($video['progress']) {
+                    $progress = EditLog::find($video['progress']);
+                    
+                    $arr = array_merge($video, ['progress' => [
+                        'id'    => $progress->id,
+                        'src'   => $progress->result_src
+                    ]]);
+
+                    return $arr;
+                }
+                return $video;
+            }, $videos);
+
+            return $data;
         }
     }
-
+    
     public function upload(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -92,6 +107,83 @@ class VideoController extends Controller
         ]);
     }
 
+    public function uploadLink(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'url' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            $error = $validator->errors()->first();
+            return response()->json([
+                'error' => 'invalid_input',
+                'message' => $error
+            ], 400);
+        }
+
+        $url = $request->input('url');
+        $user = $request->input('user');
+        
+        // $name = time() . '_' . Str::random(8) . '.' . $request->file('video')->getClientOriginalExtension();
+        $name = time() . '_' . Str::random(8) . '.mp4';
+        // $fileName = Str::of($name)->basename('.' . $request->file('video')->getClientOriginalExtension());
+        
+        Storage::disk('local')
+            ->put($name, file_get_contents($url));
+
+        $media = FFMpeg::open($name);
+
+        $dimensions = $media
+            ->getVideoStream()
+            ->getDimensions();
+        
+        $width = $dimensions->getWidth();
+        $height = $dimensions->getHeight();
+
+		$duration = $media->getDurationInSeconds();
+
+        \Log::debug([
+            'duration' => $duration,
+            'width' => $width,
+            'height' => $height,
+        ]);
+        // \Log::debug(print_r($media, true));
+        // $video_url = $this->uploadToS3($request, $name);
+        
+        // $slug = $this->random_str(15);
+        // while (Video::where('slug', $slug)->exists()) {
+        //     $slug = $this->random_str(12);
+        // }
+
+        // $video = new Video;
+        // $video->user_id = $user->id;        
+        // $video->title = $fileName;
+        // $video->src = $request->file('video')->storeAs('uploads', $name);
+        // $video->extension = $request->file('video')->getClientOriginalExtension();
+        // $video->slug = $slug;
+        // $video->s3_url = $video_url;
+
+        // $media = FFMpeg::open($video->src);
+        
+        // $dimensions = $media
+        //     ->getVideoStream()
+        //     ->getDimensions();
+
+        // $thumbnail = $media->frame(\FFMpeg\Coordinate\TimeCode::fromSeconds(2))
+        //     ->save(storage_path('app/public') . '/' . "thumbnails/$fileName.jpg");
+        
+        // $video->dimensions = "{$dimensions->getWidth()}x{$dimensions->getHeight()}";
+        // $video->thumbnail = "thumbnails/$fileName.jpg";
+        // $video->save();
+
+        // return response()->json([
+        //     'success'   => true,
+        //     'slug'   => $video->slug,
+        //     'dimensions' => $video->dimensions,
+        //     'thumbnail' => $video->thumbnail
+        // ]);
+    }
+
     private function uploadToS3(Request $request, $name)
     {
         $region = config('aws.region');
@@ -135,6 +227,31 @@ class VideoController extends Controller
 
         unlink(storage_path('app') . '/' . $video->src);
         $video->delete();
+
+        return response()->json([
+            'success'   => true
+        ]);
+    }
+
+    public function saveProgress(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'slug'      => 'required',
+            'job_id'    => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            $error = $validator->errors()->first();
+            return response()->json([
+                'error' => 'invalid_input',
+                'message' => $error
+            ], 400);
+        }
+
+        $video = Video::where('slug', $request->input('slug'))->first();
+
+        $video->progress = $request->input('job_id');
+        $video->save();
 
         return response()->json([
             'success'   => true
