@@ -6,6 +6,7 @@ use App\Jobs\BurnSRT;
 use App\Jobs\Resize;
 use App\Jobs\Clip;
 use App\Jobs\ProgressBar;
+use App\Jobs\ClipResize;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -97,14 +98,14 @@ class FFMpegController extends Controller
             $user_id = $check['user_id'];
 
             if ($request->input('dimensions') && count($request->input('dimensions'))) {
-                $ratioX = $request->input('dimensions')['x'];
-                $ratioY = $request->input('dimensions')['y'];
-                $log->type = "Change size: $ratioX:$ratioY";
+                $ratio_x = $request->input('dimensions')['x'];
+                $ratio_y = $request->input('dimensions')['y'];
+                $log->type = "Change size: $ratio_x:$ratio_y";
                 $type = 'resize';
             } else {
-                $ratioX = $request->input('ratio')['x'];
-                $ratioY = $request->input('ratio')['y'];
-                $log->type = "Change aspect ratio: $ratioX:$ratioY";
+                $ratio_x = $request->input('ratio')['x'];
+                $ratio_y = $request->input('ratio')['y'];
+                $log->type = "Change aspect ratio: $ratio_x:$ratio_y";
                 $type = 'ratio';
             }
 
@@ -112,7 +113,7 @@ class FFMpegController extends Controller
             $log->save();
                 
             if ($user_id === $user->id) {
-                Resize::dispatch($log->id, $ratioX, $ratioY, $type);
+                Resize::dispatch($log->id, $ratio_x, $ratio_y, $type);
     
                 return response()->json([
                     'job' => $log->id,
@@ -146,14 +147,12 @@ class FFMpegController extends Controller
         }
 
         if ($request->input('slug') || $request->input('id')) {
+            $check = $this->checkSlugOrId($request);
+            if (array_key_exists('error', $check)) return $check['json'];
+            
             $user = $request->input('user');
             $log = new EditLog();
             $log->user_id = $user->id;
-            $user_id = 0;
-
-            $check = $this->checkSlugOrId($request);
-            if (array_key_exists('error', $check)) return $check['json'];
-
             $log->src = $check['src'];
             $log->video_id = $check['video_id'];
             $user_id = $check['user_id'];
@@ -173,7 +172,7 @@ class FFMpegController extends Controller
                 ], 200);
             } else {
                 return response()->json([
-                    'video' => false
+                    'error' => 'Invalid request'
                 ], 400);
             }  
         } else {
@@ -342,6 +341,94 @@ class FFMpegController extends Controller
         } else {
             return response()->json([
                 'error' => 'Invalid request',
+            ], 400);
+        }
+    }
+
+    public function saveClipResize(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'original'              => 'required|exists:videos,slug',
+            'clip'                  => 'required|boolean',
+            'resize'                => 'required|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            $error = $validator->errors()->first();
+            return response()->json([
+                'error' => 'invalid_input',
+                'message' => $error
+            ]);
+        }
+
+        $check = null;
+        if (!$request->input('id')) {
+            $request->merge(['slug' => $request->input('original')]);
+            $check = $this->checkSlugOrId($request);
+            if (array_key_exists('error', $check)) return $check['json'];    
+        }
+
+        $user = $request->input('user');
+        $log = new EditLog();
+        $log->user_id = $user->id;
+
+        $log->src = $check['src'];
+        $log->video_id = $check['video_id'];
+        $user_id = $check['user_id'];
+
+        $options = [];
+        $clip = $request->input('clip');
+        $resize = $request->input('resize');
+
+        if ($clip) {
+            $options['clip'] = true;
+            $options['start_time'] = $request->input('start_time');
+            $options['end_time'] = $request->input('end_time');
+            $clip_type = "Clip: " . $options['start_time'] . ' - ' . $options['end_time'];
+        }
+
+        if ($resize) {
+            $options['resize'] = true;
+            if ($request->input('dimensions') && count($request->input('dimensions'))) {
+                $options['ratio_x'] = $request->input('dimensions')['x'];
+                $options['ratio_y'] = $request->input('dimensions')['y'];
+                $resize_type = "Change size: " . $options['ratio_x'] . ':' . $options['ratio_y'];
+                $options['type'] = 'resize';
+            } else {
+                $options['ratio_x'] = $request->input('ratio')['x'];
+                $options['ratio_y'] = $request->input('ratio')['y'];
+                $resize_type = "Change aspect ratio: " . $options['ratio_x'] . ':' . $options['ratio_y'];
+                $options['type'] = 'ratio';
+            }
+        }
+
+        $log_type = '';
+        $log_type .= $request->input('clip') ? "$clip_type | " : '';
+        $log_type .= $request->input('resize') ? "$resize_type | " : '';
+        $log_type .= 'Save';
+        $log->type = $log_type;
+        
+        $log->result_src = ($clip || $resize) ?
+            'jobs/' . time() . '_' . uniqid() . '.' . substr($log->src, -3) :
+            $check['src'];
+        $log->save();
+            
+        if ($user_id === $user->id) {
+            if ($clip || $resize) {
+                ClipResize::dispatch($log->id, $options);
+            }
+
+            $video = Video::where('slug', $request->input('original'))->first();
+            $video->progress = $log->id;
+            $video->save();
+
+            return response()->json([
+                'job' => $log->id,
+            ], 200);
+        } else {
+            return response()->json([
+                'error'     => true,
+                'message'   => 'Unauthorized'
             ], 400);
         }
     }

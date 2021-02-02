@@ -46,7 +46,7 @@ class Resize implements ShouldQueue
         $resolution = shell_exec($cmd);
         $arr = explode('x', $resolution);
         if ($this->type == 'ratio') {
-            $dimensions = $this->getNewSize(trim($arr[0]), trim($arr[1]), $this->ratioX, $this->ratioY);
+            $dimensions = self::getNewSize(trim($arr[0]), trim($arr[1]), $this->ratioX, $this->ratioY);
         } else {
             $dimensions = new StdClass();
             $dimensions->width = $this->ratioX;
@@ -66,7 +66,7 @@ class Resize implements ShouldQueue
             ->save($log->result_src);
     }
 
-    public function getNewSize($width, $height, $ratioX, $ratioY) {
+    public static function getNewSize($width, $height, $ratioX, $ratioY) {
         $obj = new stdClass();
         if ($ratioX > $ratioY) {
             $height = ceil(($width * $ratioY) / $ratioX);
@@ -78,7 +78,7 @@ class Resize implements ShouldQueue
             $obj->width = ($width % 2 == 0) ? $width : $width + 1;
         } else {
             $obj->width = $width;
-            $obj->height = $height;
+            $obj->height = $width;
         }
 
         return $obj;
