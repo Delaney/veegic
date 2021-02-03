@@ -36,6 +36,13 @@ class TranslatorController extends Controller
         $to = $request->input('language');
         $result = $translate->make($to, $sentences);
 
+        if (gettype($result) == 'object' && $result->error) {
+            return response()->json([
+                'error'     => true,
+                'message'   => $result->error->message
+            ], 400);
+        }
+
         $n = 0;
         foreach($arr as $obj) {
             $o = new stdClass();
@@ -44,7 +51,7 @@ class TranslatorController extends Controller
             $o->end_time = $obj['end_time'];
             if ($obj['sentence']) {
                 $o->sentence = $result[$n]->translations[0]->text;
-                $n++;
+                $n++; 
             } else {
                 $o->sentence = $obj['sentence'];
             }

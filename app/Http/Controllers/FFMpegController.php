@@ -364,10 +364,11 @@ class FFMpegController extends Controller
         $check = null;
         if (!$request->input('id')) {
             $request->merge(['slug' => $request->input('original')]);
-            $check = $this->checkSlugOrId($request);
-            if (array_key_exists('error', $check)) return $check['json'];    
         }
-
+        
+        $check = $this->checkSlugOrId($request);
+        if (array_key_exists('error', $check)) return $check['json'];    
+        
         $user = $request->input('user');
         $log = new EditLog();
         $log->user_id = $user->id;
@@ -440,6 +441,21 @@ class FFMpegController extends Controller
         
         if ($request->input('slug')) {
             $video = Video::where('slug', $request->input('slug'))->first();
+            if (!$video) {
+                return [
+                    'error' => true,
+                    'json'  => response()->json([
+                        'video' => false,
+                        'message' => 'Video not found'
+                    ], 400)
+                ];
+            }
+
+            $video_id = $video->id;
+            $src = $video->src;
+            $user_id = $video->user_id;
+        } else if ($request->input('original')) {
+            $video = Video::where('slug', $request->input('original'))->first();
             if (!$video) {
                 return [
                     'error' => true,
