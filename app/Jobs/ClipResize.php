@@ -61,8 +61,8 @@ class ClipResize implements ShouldQueue
                 $dimensions = Resize::getNewSize($dim->getWidth(), $dim->getHeight(), $o['ratio_x'], $o['ratio_y']);
             } else {
                 $dimensions = new \stdClass();
-                $dimensions->width = $o['ratio_x'];
-                $dimensions->height = $o['ratio_y'];
+                $dimensions->width = ($o['ratio_x'] % 2 == 0) ? $o['ratio_x'] : $o['ratio_x'] + 1;
+                $dimensions->height = ($o['ratio_y'] % 2 == 0) ? $o['ratio_y'] : $o['ratio_y'] + 1;
             }
             $d = new \FFMpeg\Coordinate\Dimension($dimensions->width, $dimensions->height);
             $resizeFilter = new \FFMpeg\Filters\Video\ResizeFilter($d);

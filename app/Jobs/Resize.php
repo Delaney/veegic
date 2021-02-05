@@ -49,8 +49,8 @@ class Resize implements ShouldQueue
             $dimensions = self::getNewSize(trim($arr[0]), trim($arr[1]), $this->ratioX, $this->ratioY);
         } else {
             $dimensions = new StdClass();
-            $dimensions->width = $this->ratioX;
-            $dimensions->height = $this->ratioY;
+            $dimensions->width = ($this->ratioX % 2 == 0) ? $this->ratioX : $this->ratioX + 1;
+            $dimensions->height = ($this->ratioY % 2 == 0) ? $this->ratioY : $this->ratioY + 1;
         }
 
         FFMpeg::open($log->src)
