@@ -27,18 +27,23 @@ class VideoController extends Controller
             $data = array_map(function($video) {
                 if ($video['progress']) {
                     $progress = EditLog::find($video['progress']);
-                    $media = FFMpeg::open($progress->result_src);
-        
-                    $dimensions = $media
-                        ->getVideoStream()
-                        ->getDimensions();
-                    
+                    try {
+                        $media = FFMpeg::open($progress->result_src);
+            
+                        $dimensions = $media
+                            ->getVideoStream()
+                            ->getDimensions();
+                        
+                    } catch (\Exception $ex) {
+                        \Log::error($ex->getMessage());
+                    }
+
                     $arr = array_merge($video, ['progress' => [
                         'id'    => $progress->id,
                         'src'   => $progress->result_src,
-                        'dimensions' => "{$dimensions->getWidth()}x{$dimensions->getHeight()}"
+                        'dimensions' => isset($dimensions) ? "{$dimensions->getWidth()}x{$dimensions->getHeight()}" : $video['dimensions']
                     ]]);
-
+                        
                     return $arr;
                 }
                 return $video;
