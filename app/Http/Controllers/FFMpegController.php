@@ -230,7 +230,7 @@ class FFMpegController extends Controller
     public function getFrame(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'seconds' => 'required',
+            'time_code' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -249,7 +249,7 @@ class FFMpegController extends Controller
             $src = $check['src'];
             $user_id = $check['user_id'];
 
-            $seconds = $request->input('seconds');
+            $time_code = $request->input('time_code');
 
             $fileName = time() . '_' . uniqid() . '.jpg';
 
@@ -258,21 +258,22 @@ class FFMpegController extends Controller
 
                 $duration = $media->getDurationInSeconds();
 
+                $time_code = "$time_code:00";
+        
+                $start = \FFMpeg\Coordinate\TimeCode::fromString($time_code);
+                $seconds = $start->toSeconds();
+
                 if ($duration >= $seconds) {
                         $media->frame(\FFMpeg\Coordinate\TimeCode::fromSeconds($seconds))
                         ->save(storage_path('app/public') . '/' . "thumbnails/$fileName");
 
-                    // return response()->json([
-                    //     'success'   => true,
-                    //     'frame' => "thumbnails/$fileName"
-                    // ]);
                     return response()->download(
                         storage_path('app/public') . '/' . "thumbnails/$fileName",
                     );
                 } else {
                     return response()->json([
                         'error' => true,
-                        'message' => 'Seconds value is greater than video duration'
+                        'message' => 'Timecode value is greater than video duration'
                     ], 400);    
                 }
             } else {
