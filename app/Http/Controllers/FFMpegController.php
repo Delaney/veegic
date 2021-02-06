@@ -267,9 +267,15 @@ class FFMpegController extends Controller
                         $media->frame(\FFMpeg\Coordinate\TimeCode::fromSeconds($seconds))
                         ->save(storage_path('app/public') . '/' . "thumbnails/$fileName");
 
-                    return response()->download(
-                        storage_path('app/public') . '/' . "thumbnails/$fileName",
-                    );
+                        $file = file_get_contents(storage_path('app/public') . '/' . "thumbnails/$fileName");
+                        $file = base64_encode($file);
+
+                    // return response()->download(
+                    //     base64_encode(storage_path('app/public') . '/' . "thumbnails/$fileName")
+                    // );
+                    return response()->json([
+                        'frame' => $file
+                    ]);
                 } else {
                     return response()->json([
                         'error' => true,
