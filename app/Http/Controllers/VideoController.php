@@ -75,7 +75,7 @@ class VideoController extends Controller
             return response()->json([
                 'error' => 'invalid_file_type',
                 'message' => 'The uploaded file is not a video file'
-            ]);
+            ], 400);
         }
         $user = $request->input('user');
 

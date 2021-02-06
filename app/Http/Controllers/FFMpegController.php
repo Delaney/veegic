@@ -29,7 +29,7 @@ class FFMpegController extends Controller
             return response()->json([
                 'error' => 'invalid_input',
                 'message' => $error
-            ]);
+            ], 400);
         }
 
         $user = $request->input('user');
@@ -143,7 +143,7 @@ class FFMpegController extends Controller
             return response()->json([
                 'error' => 'invalid_input',
                 'message' => $error
-            ]);
+            ], 400);
         }
 
         if ($request->input('slug') || $request->input('id')) {
@@ -238,7 +238,7 @@ class FFMpegController extends Controller
             return response()->json([
                 'error' => 'invalid_input',
                 'message' => $error
-            ]);
+            ], 400);
         }
 
         if ($request->input('slug') || $request->input('id')) {
@@ -309,7 +309,7 @@ class FFMpegController extends Controller
             return response()->json([
                 'error' => 'invalid_input',
                 'message' => $error
-            ]);
+            ], 400);
         }
 
         if ($request->input('slug') || $request->input('id')) {
@@ -374,7 +374,7 @@ class FFMpegController extends Controller
             return response()->json([
                 'error' => 'invalid_input',
                 'message' => $error
-            ]);
+            ], 400);
         }
 
         $check = null;

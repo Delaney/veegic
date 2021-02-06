@@ -13,7 +13,7 @@ class TranslatorController extends Controller
         $validator = Validator::make($request->all(), [
             'language'      => 'required',
             'srtObjects'    => 'required',
-        ]);
+        ], 400);
 
         if ($validator->fails()) {
             $error = $validator->errors()->first();
