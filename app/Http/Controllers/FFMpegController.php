@@ -264,11 +264,13 @@ class FFMpegController extends Controller
                 $seconds = $start->toSeconds();
 
                 if ($duration >= $seconds) {
-                        $media->frame(\FFMpeg\Coordinate\TimeCode::fromSeconds($seconds))
-                        ->save(storage_path('app/public') . '/' . "thumbnails/$fileName");
+                    $media->frame(\FFMpeg\Coordinate\TimeCode::fromSeconds($seconds))
+                    ->save(storage_path('app/public') . '/' . "thumbnails/$fileName");
 
-                        $file = file_get_contents(storage_path('app/public') . '/' . "thumbnails/$fileName");
-                        $file = base64_encode($file);
+                    $file = file_get_contents(storage_path('app/public') . '/' . "thumbnails/$fileName");
+                    $file = base64_encode($file);
+
+                    unlink(storage_path('app/public') . '/' . "thumbnails/$fileName");
 
                     // return response()->download(
                     //     base64_encode(storage_path('app/public') . '/' . "thumbnails/$fileName")
@@ -339,7 +341,14 @@ class FFMpegController extends Controller
                     ->gif($start, $dimensions, $diff)
                     ->save(storage_path('app/public') . '/' . "gif/$fileName");
 
-                return response()->download(storage_path('app/public') . '/' . "gif/$fileName", $fileName);
+                $file = file_get_contents(storage_path('app/public') . '/' . "gif/$fileName");
+                $file = base64_encode($file);
+
+                unlink(storage_path('app/public') . '/' . "gif/$fileName");
+                return response()->json([
+                    'gif' => $file
+                ]);
+                // return response()->download(storage_path('app/public') . '/' . "gif/$fileName", $fileName);
                 } else {
                 return response()->json([
                     'video' => false
