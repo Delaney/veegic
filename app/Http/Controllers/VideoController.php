@@ -135,9 +135,8 @@ class VideoController extends Controller
         $url = $request->input('url');
         $user = $request->input('user');
         
-        // $name = time() . '_' . Str::random(8) . '.' . $request->file('video')->getClientOriginalExtension();
-        $name = time() . '_' . Str::random(8) . '.mp4';
-        // $fileName = Str::of($name)->basename('.' . $request->file('video')->getClientOriginalExtension());
+        $fileName = Str::random(8);
+        $name = 'uploads/' . time() . '_' . $fileName . '.mp4';
         
         Storage::disk('local')
             ->put($name, file_get_contents($url));
@@ -152,47 +151,39 @@ class VideoController extends Controller
         $height = $dimensions->getHeight();
 
 		$duration = $media->getDurationInSeconds();
-
-        \Log::debug([
-            'duration' => $duration,
-            'width' => $width,
-            'height' => $height,
-        ]);
-        // \Log::debug(print_r($media, true));
-        // $video_url = $this->uploadToS3($request, $name);
         
-        // $slug = $this->random_str(15);
-        // while (Video::where('slug', $slug)->exists()) {
-        //     $slug = $this->random_str(12);
-        // }
+        $slug = $this->random_str(15);
+        while (Video::where('slug', $slug)->exists()) {
+            $slug = $this->random_str(12);
+        }
 
-        // $video = new Video;
-        // $video->user_id = $user->id;        
-        // $video->title = $fileName;
-        // $video->src = $request->file('video')->storeAs('uploads', $name);
-        // $video->extension = $request->file('video')->getClientOriginalExtension();
-        // $video->slug = $slug;
+        $video = new Video;
+        $video->user_id = $user->id;        
+        $video->title = $fileName;
+        $video->src = $name;
+        $video->extension = 'mp4';
+        $video->slug = $slug;
         // $video->s3_url = $video_url;
 
-        // $media = FFMpeg::open($video->src);
+        $media = FFMpeg::open($video->src);
         
-        // $dimensions = $media
-        //     ->getVideoStream()
-        //     ->getDimensions();
+        $dimensions = $media
+            ->getVideoStream()
+            ->getDimensions();
 
-        // $thumbnail = $media->frame(\FFMpeg\Coordinate\TimeCode::fromSeconds(2))
-        //     ->save(storage_path('app/public') . '/' . "thumbnails/$fileName.jpg");
+        $thumbnail = $media->frame(\FFMpeg\Coordinate\TimeCode::fromSeconds(2))
+            ->save(storage_path('app/public') . '/' . "thumbnails/$fileName.jpg");
         
-        // $video->dimensions = "{$dimensions->getWidth()}x{$dimensions->getHeight()}";
-        // $video->thumbnail = "thumbnails/$fileName.jpg";
-        // $video->save();
+        $video->dimensions = "{$dimensions->getWidth()}x{$dimensions->getHeight()}";
+        $video->thumbnail = "thumbnails/$fileName.jpg";
+        $video->save();
 
-        // return response()->json([
-        //     'success'   => true,
-        //     'slug'   => $video->slug,
-        //     'dimensions' => $video->dimensions,
-        //     'thumbnail' => $video->thumbnail
-        // ]);
+        return response()->json([
+            'success'   => true,
+            'slug'   => $video->slug,
+            'dimensions' => $video->dimensions,
+            'thumbnail' => $video->thumbnail
+        ]);
     }
 
     private function uploadToS3(Request $request, $name)
