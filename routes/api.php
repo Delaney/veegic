@@ -41,6 +41,7 @@ Route::group(['middleware' => 'api.token'], function () {
     Route::post('/clip', 'FFMpegController@clip');
     Route::post('/clip_resize', 'FFMpegController@saveClipResize');
     Route::post('/progress_bar', 'FFMpegController@addProgressBar');
+    Route::post('/add_filter', 'FFMpegController@addFilter');
 
     //Immediate
     Route::post('/get_frame', 'FFMpegController@getFrame');

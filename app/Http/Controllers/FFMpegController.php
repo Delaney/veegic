@@ -7,6 +7,7 @@ use App\Jobs\Resize;
 use App\Jobs\Clip;
 use App\Jobs\ProgressBar;
 use App\Jobs\ClipResize;
+use App\Jobs\ColorFilter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -166,6 +167,56 @@ class FFMpegController extends Controller
 
             if ($user_id === $user->id) {
                 Clip::dispatch($log->id, $start_time, $end_time);
+    
+                return response()->json([
+                    'job' => $log->id,
+                ], 200);
+            } else {
+                return response()->json([
+                    'error' => 'Invalid request'
+                ], 400);
+            }  
+        } else {
+            return response()->json([
+                'error' => 'Invalid request',
+            ], 400);
+        }
+
+    }
+
+    public function addFilter(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'type' => 'required|in:grayscale,sepia,vintage,negative,color_negative,cross_process',
+        ]);
+
+        if ($validator->fails()) {
+            $error = $validator->errors()->first();
+            return response()->json([
+                'error' => 'invalid_input',
+                'message' => $error
+            ], 400);
+        }
+
+        if ($request->input('slug') || $request->input('id')) {
+            $check = $this->checkSlugOrId($request);
+            if (array_key_exists('error', $check)) return $check['json'];
+            
+            $user = $request->input('user');
+            $log = new EditLog();
+            $log->user_id = $user->id;
+            $log->src = $check['src'];
+            $log->video_id = $check['video_id'];
+            $user_id = $check['user_id'];
+
+            $type = $request->input('type');
+
+            $log->type = "Add Filter: $type";
+            $log->result_src = 'jobs/' . time() . '_' . uniqid() . '.' . substr($log->src, -3);
+            $log->save();
+
+            if ($user_id === $user->id) {
+                ColorFilter::dispatch($log->id, $type);
     
                 return response()->json([
                     'job' => $log->id,
