@@ -114,7 +114,8 @@ class VideoController extends Controller
             'success'   => true,
             'slug'   => $video->slug,
             'dimensions' => $video->dimensions,
-            'thumbnail' => $video->thumbnail
+            'thumbnail' => $video->thumbnail,
+            's3'        => $video->s3_url
         ]);
     }
 
@@ -184,7 +185,8 @@ class VideoController extends Controller
             'success'   => true,
             'slug'   => $video->slug,
             'dimensions' => $video->dimensions,
-            'thumbnail' => $video->thumbnail
+            'thumbnail' => $video->thumbnail,
+            's3'        => $video->s3_url
         ]);
     }
 
