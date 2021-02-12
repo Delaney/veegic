@@ -157,13 +157,15 @@ class VideoController extends Controller
             $slug = $this->random_str(12);
         }
 
+        $video_url = $this->uploadToS3($request, $name);
+
         $video = new Video;
         $video->user_id = $user->id;        
         $video->title = $fileName;
         $video->src = $name;
         $video->extension = 'mp4';
         $video->slug = $slug;
-        // $video->s3_url = $video_url;
+        $video->s3_url = $video_url;
 
         $media = FFMpeg::open($video->src);
         
