@@ -82,7 +82,7 @@ class VideoController extends Controller
         $name = time() . '_' . Str::random(8) . '.' . $request->file('video')->getClientOriginalExtension();
         $fileName = Str::of($name)->basename('.' . $request->file('video')->getClientOriginalExtension());
         
-        $video_url = $this->uploadToS3($request, $name);
+        $video_url = $this->uploadToS3($request->file('video'), $name);
         
         $slug = $this->random_str(15);
         while (Video::where('slug', $slug)->exists()) {
@@ -158,7 +158,7 @@ class VideoController extends Controller
             $slug = $this->random_str(12);
         }
 
-        $video_url = $this->uploadToS3($request, $name);
+        $video_url = $this->uploadToS3(storage_path('app/') . $name, $fileName . '.mp4');
 
         $video = new Video;
         $video->user_id = $user->id;        
@@ -190,7 +190,7 @@ class VideoController extends Controller
         ]);
     }
 
-    private function uploadToS3(Request $request, $name)
+    private function uploadToS3($file, $name)
     {
         $region = config('aws.region');
         $access_key = config('aws.access_key');
@@ -210,7 +210,7 @@ class VideoController extends Controller
             $result = $s3->putObject([
                 'Bucket'    =>  $bucketName,
                 'Key'       =>  urlencode($name),
-                'Body'      =>  fopen($request->file('video'), 'r'),
+                'Body'      =>  fopen($file, 'r'),
                 'ACL'       =>  'public-read',
             ]);
             $video_url = $result->get('ObjectURL');
