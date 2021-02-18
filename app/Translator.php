@@ -6,7 +6,7 @@ use Exception;
 use GuzzleHttp\Client;
 
 /**
- * Paystack service class
+ * Translator service class
  */
 class Translator
 {
@@ -22,7 +22,7 @@ class Translator
     protected $base_url;
 
     /**
-     * Paystack API secret key
+     * Microsoft Azure API secret key
      * @var string
      */
     protected $api_key;
@@ -110,10 +110,10 @@ class Translator
 	/**
      * Make the http get request
      * 
-     * @param string $path | paystack relative path like '/transaction'
+     * @param string $path
      * @param array $query
      * 
-     * @return App\Services\PaystackService
+     * @return App\Translator
      * @return Exception
      */
     private function make_http_get_request($path, $query = [])
