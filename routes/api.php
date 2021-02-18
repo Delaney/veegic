@@ -27,6 +27,7 @@ Route::post('login', 'AuthController@login');
 Route::post('register', 'AuthController@register');
 
 Route::group(['middleware' => 'api.token'], function () {
+    Route::get('/user', 'WebController@user');
     Route::get('/videos', 'VideoController@index');
     Route::get('/videos/delete/{slug}', 'VideoController@deleteVideo');
     Route::post('/upload', 'VideoController@upload'); // In: file | Out: file_info
@@ -54,4 +55,11 @@ Route::group(['middleware' => 'api.token'], function () {
     Route::get('/download/{slug}', 'VideoController@download');
     Route::get('/transcribe/{slug}', 'SubtitlesController@getSubtitles'); // In: id | Out: srt
     Route::get('/result/{log_id}', 'VideoController@downloadResult');
+
+
+    Route::group(['prefix' => 'payment'], function () {
+        Route::get('link', 'PaddleController@generate_payment_link');
+    });
 });
+
+Route::post('webhook', 'WebhookController@post');
