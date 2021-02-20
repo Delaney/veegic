@@ -41,9 +41,11 @@ class AuthController extends Controller
 				'email'	=>	$request->input('email'),
 				'password'	=> Hash::make($request->input('password'))
 			]);
-			
+			$this->generateApiKey($user);
+            $this->generateToken($user);
 			return response()->json([
 				'success' => true,
+				'api_token' => $user->api_token,
 			]);
 		} catch (\Exception $error) {
 			return response()->json([
