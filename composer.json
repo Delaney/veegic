@@ -10,6 +10,7 @@
     "require": {
         "php": "^7.3|^8.0",
         "aws/aws-sdk-php": "^3.165",
+        "bensampo/laravel-enum": "^3.3",
         "fideloper/proxy": "^4.4",
         "fruitcake/laravel-cors": "^2.0",
         "google/cloud-translate": "^1.9",
@@ -20,7 +21,7 @@
         "laravel/tinker": "^2.5",
         "laravel/ui": "^3.1",
         "livewire/livewire": "^2.0",
-        "nesbot/carbon": "^2.42",
+        "nesbot/carbon": "^2.45",
         "pbmedia/laravel-ffmpeg": "^7.4"
     },
     "require-dev": {
