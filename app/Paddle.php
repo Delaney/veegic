@@ -66,7 +66,19 @@ class Paddle
 		$uri = $this->base_url . '2.0/product/generate_pay_link';
 		$data['vendor_id'] = $this->vendor_id;
 		$data['vendor_auth_code'] = $this->vendor_auth_code;
-		$data['product_id'] = $this->product_id;
+		$data['product_id'] = (Integer) $this->product_id;
+		$result = $this->jwt_request_post($uri, $data);
+		return $result;
+	}
+
+	# -- TRANSACTIONS
+	# todo
+
+	# -- CANCEL PLAN/USER
+	public function cancel_subscription($data) {
+		$uri = $this->base_url . '2.0/subscription/users_cancel';
+		$data['vendor_id'] = $this->vendor_id;
+		$data['vendor_auth_code'] = $this->vendor_auth_code;
 		$result = $this->jwt_request_post($uri, $data);
 		return $result;
 	}
