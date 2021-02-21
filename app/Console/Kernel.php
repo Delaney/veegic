@@ -25,6 +25,8 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('local:clean')->hourly();
+
+        $schedule->command('subscription:expire')->dailyAt('07:00');
     }
 
     /**

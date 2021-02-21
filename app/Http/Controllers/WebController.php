@@ -28,7 +28,9 @@ class WebController extends Controller
             ],
             'subscription' => [
                 'type'      => $subscription->type,
-                'expire_at' => $subscription->expire_at
+                'expire_at' => $subscription->type == 'pro'?
+                    $subscription->expire_at:
+                    null
             ]
         ]);
     }

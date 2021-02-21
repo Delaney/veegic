@@ -69,16 +69,11 @@ class WebhookController extends Controller
 
                     // UPDATE SUBSCRIPTION
                     $subscription->type = 'pro';
-                    if (!$subscription->current_txn_id) {
-                        $subscription->current_txn_id = $transaction->id;
-                    }
+                    $subscription->current_txn_id = $transaction->id;
 
                     $now = Carbon::now($timezone);
                     if ($now > $subscription->expire_at) {
                         $subscription->expire_at = $transaction->end_date;
-                    } else {
-                        $expires = Carbon::parse($subscription->expire_at)->timezone($timezone)->addDays(30);
-                        $subscription->expire_at = $expires;
                     }
 
                     $subscription->save();
