@@ -22,6 +22,11 @@ class Transaction extends Model
         'order_id',
         'checkout_id',
         'payment_method',
+        'payment_date',
+        'status',
+        'action',
+        'paddle_subscription_id',
+        'receipt_url'
     ];
 
     /**

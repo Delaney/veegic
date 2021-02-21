@@ -17,9 +17,9 @@ class CreateTransactionsTable extends Migration
             $table->id();
             $table->bigInteger('subscription_id');
             $table->enum('type', ['credit', 'debit']);
-            $table->dateTime('start_date');
-            $table->dateTime('end_date');
-            $table->bigInteger('order_id')->nullable();
+            $table->dateTime('start_date')->nullable();
+            $table->dateTime('end_date')->nullable();
+            $table->string('order_id')->nullable();
             $table->string('checkout_id')->nullable();
             $table->string('payment_method')->nullable();
             $table->timestamps();
