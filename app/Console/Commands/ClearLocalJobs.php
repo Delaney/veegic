@@ -27,7 +27,7 @@ class ClearLocalJobs extends Command
      * 
      * @var int
      */
-    protected static $max_time  = ((6) * 60);
+    protected static $max_time  = ((24 * 30) * 60);
 
     /**
      * Create a new command instance.
