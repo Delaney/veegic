@@ -61,6 +61,7 @@ Route::group(['middleware' => 'api.token'], function () {
         Route::get('link', 'PaddleController@generate_payment_link');
         Route::get('history', 'PaddleController@get_transactions');
         Route::get('cancel', 'PaddleController@cancel_subscription');
+        Route::get('update', 'PaddleController@update_payment');
     });
 });
 

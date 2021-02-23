@@ -82,4 +82,13 @@ class Paddle
 		$result = $this->jwt_request_post($uri, $data);
 		return $result;
 	}
+
+	# -- LIST USERS
+	public function list_users($data) {
+		$uri = $this->base_url . '2.0/subscription/users';
+		$data['vendor_id'] = $this->vendor_id;
+		$data['vendor_auth_code'] = $this->vendor_auth_code;
+		$result = $this->jwt_request_post($uri, $data);
+		return $result;
+	}
 }

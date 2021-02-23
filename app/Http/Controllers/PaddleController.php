@@ -11,7 +11,7 @@ class PaddleController extends Controller
 {
     public function generate_payment_link(Request $request)
     {
-        $user = (object) $request->input('user');
+        $user = $request->input('user');
 
         $paddle = Paddle::init();
         $result = $paddle->generate_payment_link([
@@ -32,9 +32,17 @@ class PaddleController extends Controller
 
     }
 
-    public function get_transactions()
+    public function get_transactions(Request $request)
     {
+        $user = $request->input('user');
+        $transactions = Transaction::where('subscription_id', $user->subscription->id)
+            ->where('type', 'credit')
+            ->get();
 
+        return response()->json([
+            'success'       => true,
+            'transactions'  => $transactions
+        ]);
     }
 
     public function cancel_subscription(Request $request)
@@ -73,7 +81,7 @@ class PaddleController extends Controller
 
     public function update_payment(Request $request)
     {
-        $user = (object) $request->input('user');
+        $user = $request->input('user');
         $subscription = $user->subscription;
         $now = Carbon::now(config('app.timezone'));
 
