@@ -104,7 +104,12 @@ class WebhookController extends Controller
                         $subscription->expire_at = $transaction->end_date;
                         
                         $subscription->save();
+
                     }
+                    break;
+                    
+                default:
+                    break;
             }
         }
 
