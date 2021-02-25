@@ -22,7 +22,8 @@
         "laravel/ui": "^3.1",
         "livewire/livewire": "^2.0",
         "nesbot/carbon": "^2.45",
-        "pbmedia/laravel-ffmpeg": "^7.4"
+        "pbmedia/laravel-ffmpeg": "^7.4",
+        "spatie/image": "^1.10"
     },
     "require-dev": {
         "facade/ignition": "^2.5",

@@ -196,6 +196,9 @@ class FFMpegController extends Controller
             $log->user_id = $user->id;
             $log->src = $check['src'];
             $log->video_id = $check['video_id'];
+            $log->result_src = 'jobs/' . time() . '_' . uniqid() . '.' . substr($log->src, -3);
+            $log->type = "Add Watermark";
+            $log->save();
             $user_id = $check['user_id'];
 
             if ($user_id === $user->id) {
