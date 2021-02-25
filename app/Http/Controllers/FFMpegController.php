@@ -16,6 +16,7 @@ use App\Models\Video;
 use App\Models\EditLog;
 use App\Subtitle;
 use ProtoneMedia\LaravelFFMpeg\Support\FFMpeg;
+use App\Watermark;
 
 class FFMpegController extends Controller
 {
@@ -170,6 +171,36 @@ class FFMpegController extends Controller
     
                 return response()->json([
                     'job' => $log->id,
+                ], 200);
+            } else {
+                return response()->json([
+                    'error' => 'Invalid request'
+                ], 400);
+            }  
+        } else {
+            return response()->json([
+                'error' => 'Invalid request',
+            ], 400);
+        }
+
+    }
+
+    public function watermark(Request $request)
+    {
+        if ($request->input('slug') || $request->input('id')) {
+            $check = $this->checkSlugOrId($request);
+            if (array_key_exists('error', $check)) return $check['json'];
+            
+            $user = $request->input('user');
+            // $log->src = $check['src'];
+            // $log->video_id = $check['video_id'];
+            $user_id = $check['user_id'];
+
+            if ($user_id === $user->id) {
+                Watermark::put($check['src']);
+    
+                return response()->json([
+                    // 'job' => $log->id,
                 ], 200);
             } else {
                 return response()->json([

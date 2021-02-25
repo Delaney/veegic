@@ -56,12 +56,19 @@ Route::group(['middleware' => 'api.token'], function () {
     Route::get('/transcribe/{slug}', 'SubtitlesController@getSubtitles'); // In: id | Out: srt
     Route::get('/result/{log_id}', 'VideoController@downloadResult');
 
-
+    //Payments
     Route::group(['prefix' => 'payment'], function () {
         Route::get('link', 'PaddleController@generate_payment_link');
         Route::get('history', 'PaddleController@get_transactions');
         Route::get('cancel', 'PaddleController@cancel_subscription');
         Route::get('update', 'PaddleController@update_payment');
+    });
+
+    //Watermark
+    Route::group(['prefix' => 'watermark'], function () {
+        Route::get('/', 'WatermarkController@get');
+        Route::post('/', 'WatermarkController@set');
+        Route::post('/add', 'FFMpegController@watermark');
     });
 });
 
