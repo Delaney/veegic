@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Models\EditLog;
 use ProtoneMedia\LaravelFFMpeg\Support\FFMpeg;
 use ProtoneMedia\LaravelFFMpeg\Filters\WatermarkFactory;
 
@@ -20,7 +21,7 @@ class Watermark
 
 		return $newTitle;
 	}
-	
+
 	public static function padd($src)
 	{
 		$video_path = storage_path('app') . '/' . $src;
@@ -63,15 +64,15 @@ class Watermark
 		return $new_title;
 	}
 
-	public static function put($src, $file = null)
+	public static function put(EditLog $log, $file = null)
 	{
-		$new_title = 'app/public/' . $src;
+		$new_title = 'public/' . $log->src;
 		if (!$file) $file = 'default.png';
 
 		$file = "watermarks\\$file";
 		$watermarkPath = storage_path($file);
 
-		FFMpeg::open($src)
+		FFMpeg::open($log->src)
 			// ->addFilter(function ($filters) use ($watermarkPath) {
 			// 	$filters->watermark($watermarkPath, [
 			// 		'position'	=> 'absolute',
@@ -84,9 +85,14 @@ class Watermark
 					->right(25)
 					->top(25);
 			})
+			->onProgress(function ($percentage, $remaining, $rate) use ($log) {
+				$log->progress = $percentage;
+                $log->save();
+                // \Log::info("Watermark: {$percentage}% done, {$remaining} seconds left at rate: {$rate}");
+            })
 			->export()
 			->toDisk('local')
 		    ->inFormat(new \FFMpeg\Format\Video\X264('libmp3lame'))
-            ->save($new_title);
+            ->save($log->result_src);
 	}
 }

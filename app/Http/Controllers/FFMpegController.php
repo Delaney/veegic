@@ -192,15 +192,17 @@ class FFMpegController extends Controller
             if (array_key_exists('error', $check)) return $check['json'];
             
             $user = $request->input('user');
-            // $log->src = $check['src'];
-            // $log->video_id = $check['video_id'];
+            $log = new EditLog();
+            $log->user_id = $user->id;
+            $log->src = $check['src'];
+            $log->video_id = $check['video_id'];
             $user_id = $check['user_id'];
 
             if ($user_id === $user->id) {
-                Watermark::put($check['src']);
+                Watermark::put($log);
     
                 return response()->json([
-                    // 'job' => $log->id,
+                    'job' => $log->id,
                 ], 200);
             } else {
                 return response()->json([
