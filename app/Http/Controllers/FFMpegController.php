@@ -202,7 +202,9 @@ class FFMpegController extends Controller
             $user_id = $check['user_id'];
 
             if ($user_id === $user->id) {
-                Watermark::put($log);
+                $watermark = $user->watermark? $user->watermark : null;
+                $options = $request->input('options')? $request->input('options') : [];
+                Watermark::put($log, $watermark, $options);
     
                 return response()->json([
                     'job' => $log->id,

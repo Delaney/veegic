@@ -73,26 +73,11 @@ class BurnSRT implements ShouldQueue
             $fontdir = ':fontsdir=storage/fonts';
         }
 
-        // $command = "ffmpeg -i $videoPath -vf \"subtitles=${subtitlePath}${fontdir}${optionStr}\" -c:a copy $newTitle";
-        // \Log::info($command);
-        // \Log::info("\n\n");
-        
-        // try {
-        //     // \Log::info($command);
-        //     // \Log::info("\n");
-        //     shell_exec($command);
-        //     // return true;
-        // } catch (\Exception $ex) {
-        //     \Log::error("\n\n" . $ex . "\n\n");
-        // }
-
         $customFilter = new \FFMpeg\Filters\Video\CustomFilter("subtitles=${subtitlePath}${fontdir}${optionStr}");
 
         FFMpeg::open($log->src)
             ->export()
-            // ->addFilter("subtitles=${subtitlePath}${fontdir}${optionStr}", 1)
             ->addFilter($customFilter)
-            // ->addFilter("\"subtitles=${subtitlePath}${fontdir}${optionStr}\"")
             ->onProgress(function ($percentage, $remaining, $rate) use ($log) {
                 $log->progress = $percentage;
                 $log->save();

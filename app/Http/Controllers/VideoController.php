@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Arr;
 use ProtoneMedia\LaravelFFMpeg\Support\FFMpeg;
 use App\Models\Video;
 use Aws\S3\S3Client;
@@ -46,11 +47,15 @@ class VideoController extends Controller
                         
                     return $arr;
                 }
-                return $video;
+                return Arr::only($video, ['id', 'title', 'slug', 's3_url', 'dimensions', 'thumbnail', 'progress']);
             }, $videos);
 
             return $data;
         }
+
+        return response()->json([
+            'message' => 'Unauthorized'
+        ], 401);
     }
     
     public function upload(Request $request)
@@ -278,10 +283,20 @@ class VideoController extends Controller
     public function downloadResult($log_id, Request $request)
     {
         $user = $request->input('user');
+        $subscription = $user->subscription;
+
         $log = EditLog::find($log_id);
         if ($log && $log->user_id == $user->id) {
             $result = $log->result_src;
             $path = storage_path('app/' . $result);
+
+            if (file_exists(public_path("storage/$result"))) {
+                return response()->json([
+                    'exists'    => true,
+                    'complete' => true,
+                    'url' => 'storage/' . $result
+                ]);
+            }
 
             $progress = $log->progress;
             if ($progress == 100) {
@@ -303,8 +318,13 @@ class VideoController extends Controller
                     $len = count($name);
                     $name = $name[$len - 1];
                 }
-                
-                $path = Watermark::add($result);
+
+                if ($subscription->type == 'free') {
+                    $path = Watermark::add($result);
+                } else {
+                        file_put_contents(public_path('storage/' . $result), file_get_contents(storage_path('app/') . $result));
+                    $path = public_path('storage/' . $result);
+                }
                 
                 if ($request->input('final')) {
                     // $path = Watermark::add($result);
@@ -350,11 +370,12 @@ class VideoController extends Controller
                 // }
                 return response()->json([
                     'complete' => true,
-                    'url' => 'storage/' . $result
+                    'url' => $path
                 ]);
                     
                 
-            } else {
+            } 
+            else {
                 return response()->json([
                     'complete' => false,
                     'progress' => $progress
