@@ -47,7 +47,8 @@ class VideoController extends Controller
                         
                     return $arr;
                 }
-                return Arr::only($video, ['id', 'title', 'slug', 's3_url', 'dimensions', 'thumbnail', 'progress']);
+                // return Arr::only($video, ['id', 'title', 'slug', 's3_url', 'dimensions', 'thumbnail', 'progress']);
+                return $video;
             }, $videos);
 
             return $data;
@@ -321,6 +322,7 @@ class VideoController extends Controller
 
                 if ($subscription->type == 'free') {
                     $path = Watermark::add($result);
+                    
                 } else {
                         file_put_contents(public_path('storage/' . $result), file_get_contents(storage_path('app/') . $result));
                     $path = public_path('storage/' . $result);
@@ -370,7 +372,7 @@ class VideoController extends Controller
                 // }
                 return response()->json([
                     'complete' => true,
-                    'url' => $path
+                    'url' => 'storage/' . $result
                 ]);
                     
                 
