@@ -16,10 +16,10 @@ class Watermark
 	{
 		$video_path = storage_path('app') . '/' . $src;
 		$new_title = storage_path('app/public') . '/' . $src;
-		$file = "app\\watermarks\\default.png";
+		// $file = "app\\watermarks\\default.png";
+		$file = "app/watermarks/default.png";
 		$watermark_path = storage_path($file);
 		
-		$command = "ffmpeg -i $video_path -vf drawtext=text='Veegic':x=w-tw-10:y=10:fontsize=24:fontcolor=white -y $new_title";
 		$command = "ffmpeg -i $video_path -i $watermark_path -filter_complex \"[1][0]scale2ref=w=oh*mdar:h=ih*0.25[logo][video];[video][logo]overlay=W-w-10:10\" -codec:a copy $new_title";
 		
 		shell_exec($command);
@@ -35,7 +35,8 @@ class Watermark
 		$new_title = storage_path('app') . '/' . $result_src;
 		if (!$file) $file = 'default.png';
 
-		$file = "app\\watermarks\\$file";
+		// $file = "app\\watermarks\\$file";
+		$file = "app/watermarks/$file";
 		$watermark_path = storage_path($file);
 
 		$x_offset = 10;
